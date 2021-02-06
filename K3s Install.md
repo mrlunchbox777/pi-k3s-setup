@@ -35,7 +35,7 @@
 * admin_ssh_password
   * on the admin machine
 
-### Script
+### Script 1
 
 * &&& Write out safe variables and verify go &&&&
 * if [ ! -z "${id_rsa_pub_location}" ]; then ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N admin_ssh_password && export id_rsa_pub_location="/home/${admin_username}/.ssh/id_rsa.pub"; fi
@@ -46,11 +46,14 @@
   * cp /home/${admin_username}/.ssh/id_rsa /home/${username}/.ssh/authorized_keys
   * &&& set GPU memory split to 16mb without config, or maybe tell the user to after... &&&
   * &&& if manual reboot now and ssh with key &&&
-  * echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> file.txt
+  * &&& echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt &&&
   * sudo reboot now
 
-Script 2
-* 
+### Script 2
+
+  * 
+
+### After
 
 * &&& mention basically done &&&&
 * &&& update sshd_config to not allow passwords &&&
