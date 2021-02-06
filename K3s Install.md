@@ -10,10 +10,13 @@
     * u: pi
     * p: raspberry
   * sudo vi /etc/hostname
+    * change to hostname you want
   * sudo raspi-config
     * 8 Update
     * 3 Interface Options
     * 2 SSH
+    * 4 Performance Options
+    * P2 GPU Memory -> 16
   * Reload ssh, choose one of the following
     * sudo service ssh restart
     * sudo reboot now
@@ -35,24 +38,20 @@
 * admin_ssh_password
   * on the admin machine
 
-### Script 1
+### Script
 
 * &&& Write out safe variables and verify go &&&&
-* if [ ! -z "${id_rsa_pub_location}" ]; then ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N admin_ssh_password && export id_rsa_pub_location="/home/${admin_username}/.ssh/id_rsa.pub"; fi
-* scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/home/${username}/.ssh/id_rsa.pub
+* if [ ! -z "${id_rsa_pub_location}" ]; then ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N "${admin_ssh_password}" && export id_rsa_pub_location="/home/${admin_username}/.ssh/id_rsa.pub"; fi
+* scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/home/${username}/.ssh/authorized_keys
 * ssh pi@{hostname} -praspberry
   * echo -e raspberry | sudo -S useradd -m -G sudo ${username}
   * echo -e ${password} | passwd ${username}
-  * cp /home/${admin_username}/.ssh/id_rsa /home/${username}/.ssh/authorized_keys
-  * &&& set GPU memory split to 16mb without config, or maybe tell the user to before/after... &&&
-  * &&& if manual reboot now and ssh with key &&&
-  * &&& echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt &&&
+  * echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  * exit
+* ssh ${username}@${hostname} -i "${id_rsa_pub_location}"
+  * echo -e ${password} | sudo -S userdel -r pi
+  * echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt
   * sudo reboot now
-
-### Script 2
-
-  * curl -sfL https://get.k3s.io | sh -
-  * echo ${password} | sudo -S systemctl status k3s
 
 ### After
 
