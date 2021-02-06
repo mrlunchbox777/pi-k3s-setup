@@ -44,14 +44,15 @@
   * echo -e raspberry | sudo -S useradd -m -G sudo ${username}
   * echo -e ${password} | passwd ${username}
   * cp /home/${admin_username}/.ssh/id_rsa /home/${username}/.ssh/authorized_keys
-  * &&& set GPU memory split to 16mb without config, or maybe tell the user to after... &&&
+  * &&& set GPU memory split to 16mb without config, or maybe tell the user to before/after... &&&
   * &&& if manual reboot now and ssh with key &&&
   * &&& echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt &&&
   * sudo reboot now
 
 ### Script 2
 
-  * 
+  * curl -sfL https://get.k3s.io | sh -
+  * echo ${password} | sudo -S systemctl status k3s
 
 ### After
 
