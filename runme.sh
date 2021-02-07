@@ -27,6 +27,12 @@ write_block() {
   echo ""
 }
 
+is_valid_username() {
+  local re='^[[:lower:]_][[:lower:][:digit:]_-]{2,15}$'
+  (( ${#1} > 16 )) && return 1
+  [[ $1 =~ $re ]] # return value of this comparison is used for the function
+}
+
 show_help() {
   instructionArray=( "" )
   instructionArray+=( "1. Get the pi accessible" )
@@ -156,30 +162,47 @@ show_variables() {
   write_block "${variablesArray[@]}"
 }
 
-is_valid_username() {
-  local re='^[[:lower:]_][[:lower:][:digit:]_-]{2,15}$'
-  (( ${#1} > 16 )) && return 1
-  [[ $1 =~ $re ]] # return value of this comparison is used for the function
-}
-
 validate_variables() {
   host "$hostname" 2>&s > /dev/null
   if [ ! $? -eq 0 ]
   then
-    die 'ERROR "$hostname" is not a valid hostname, please run with -h'
+    die 'ERROR: "$hostname" is not a valid hostname, please run with -h'
   fi
 
-  if [ is_valid_username "$username" ]
+  if [ ! is_valid_username "$username" ]
   then
-    die 'ERROR "$username" is not a valid username, please run with -h'
+    die 'ERROR: "$username" is not a valid username, please run with -h'
   fi
-  # password="${password}"
-  # cluster_server_name="${cluster_server_name}"
-  # id_rsa_pub_location="${id_rsa_pub_location}"
-  # admin_username="${admin_username}"
-  # admin_ssh_password="${admin_ssh_password}"
-  # run_type="${run_type:-help}"
-  # verbose="${verbose:-0}"
+
+  # assume valid $password
+
+  host "$cluster_server_name" 2>&s > /dev/null
+  if [ ! $? -eq 0 ]
+  then
+    die 'ERROR: "$cluster_server_name" is not a valid hostname, please run with -h'
+  fi
+
+  if [ ! -f "$id_rsa_pub_location"]
+  then
+    die 'ERROR: "$id_rsa_pub_location" is not an existing file, please run with -h'
+  fi
+
+  if [ ! is_valid_username "$admin_username" ]
+  then
+    die 'ERROR: "$admin_username" is not a valid username, please run with -h'
+  fi
+
+  # assume valid $admin_ssh_password
+
+  if [[ ! "$run_type" =~ ^[help|run]$ ]]
+  then
+    die 'ERROR: "$run_type" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$verbose" =~ ^[0-9]+$ ]]
+  then
+    die 'ERROR: "$run_type" is not valid, please run with -h'
+  fi
 }
 
 write_block "Starting Runme"
@@ -332,28 +355,31 @@ echo -e "${admin_ssh_password}" | ssh-add -p "${id_rsa_pub_location}"
 scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/home/${username}/.ssh/authorized_keys
 
 ssh pi@{hostname} -praspberry
-echo -e raspberry | sudo -S useradd -m -G sudo ${username}
-echo -e ${password} | passwd ${username}
-echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-exit
+  echo -e raspberry | sudo -S useradd -m -G sudo ${username}
+  echo -e ${password} | passwd ${username}
+  echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  exit
 
 ssh ${username}@${hostname} -i "${id_rsa_pub_location}"
-echo -e ${password} | sudo -S userdel -r pi
-echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt
-echo -e ${password} | sudo -S apt-get update
-echo -e ${password} | sudo -S apt-get upgrade -y
-echo -e ${password} | sudo -S apt-get autoremove -y
-sudo reboot now
+  echo -e ${password} | sudo -S userdel -r pi
+  echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt
+  echo -e ${password} | sudo -S apt-get update
+  echo -e ${password} | sudo -S apt-get upgrade -y
+  echo -e ${password} | sudo -S apt-get autoremove -y
+  sudo reboot now
 
 write_block "Waiting 5 seconds for reboot..."
 sleep 5
+
 if [ -z /usr/local/bin/k3sup ]
 then
     write_block "Installing k3s"
     curl -sLS https://get.k3sup.dev | sh
     sudo install k3sup /usr/local/bin/
 fi
+
 k3sup install --host ${hostname} --user ${username} --ssh-key ${id_rsa_pub_location} --cluster
+
 if [ ! -z "${cluster_server_name}" ]
 then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key ${id_rsa_pub_location} --server
