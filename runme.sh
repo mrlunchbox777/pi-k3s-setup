@@ -22,14 +22,24 @@ write_block() {
   if [ $1 -le $verbose]
   then
     set -- "${@:2}"
-    echo ""
-    echo "$delimiter"
+    prefix=""
+    if [ $verbose -ge 2 ]
+    then
+      prefix="* $(date) - "
+      echo ""
+      echo "$delimiter"
+    fi
+
     for i in "$@"
     do
-      echo "* $(date) - $i"
+      echo "${prefix}${i}"
     done
-    echo "$delimiter"
-    echo ""
+
+    if [ $verbose -ge 2 ]
+    then
+      echo "$delimiter"
+      echo ""
+    fi
   fi
 }
 
