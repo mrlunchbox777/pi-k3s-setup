@@ -14,7 +14,7 @@ delimiter="*******************************************************"
 force_help=0
 
 write_block() {
-  if [ $1 -le $verbose]
+  if [ $1 -le $verbose ]
   then
     set -- "${@:2}"
     prefix=""
@@ -532,7 +532,7 @@ fi
 
 show_variables
 
-if [ $run_type -eq "run" ]
+if [ $run_type = "run" ]
 then
   validate_variables
   confirm_run
