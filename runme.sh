@@ -184,15 +184,21 @@ validate_variables() {
 
   # assume valid $password
 
-  host "$cluster_server_name" 2>&s > /dev/null
-  if [ ! $? -eq 0 ]
+  if [ ! -z "$cluster_server_name" ]
   then
-    die 'ERROR: "$cluster_server_name" is not a valid hostname, please run with -h'
+    host "$cluster_server_name" 2>&s > /dev/null
+    if [ ! $? -eq 0 ]
+    then
+      die 'ERROR: "$cluster_server_name" is not a valid hostname, please run with -h'
+    fi
   fi
 
-  if [ ! -f "$id_rsa_pub_location"]
+  if [ ! -z "$id_rsa_pub_location" ]
   then
-    die 'ERROR: "$id_rsa_pub_location" is not an existing file, please run with -h'
+    if [ ! -f "$id_rsa_pub_location"]
+    then
+      die 'ERROR: "$id_rsa_pub_location" is not an existing file, please run with -h'
+    fi
   fi
 
   if [ ! is_valid_username "$admin_username" ]
@@ -210,6 +216,14 @@ validate_variables() {
   if [[ ! "$verbose" =~ ^[0-9]+$ ]]
   then
     die 'ERROR: "$verbose" is not valid, please run with -h'
+  fi
+
+  if [ ! -z "$interactive" ]
+  then
+    if [[ ! "$interactive" =~ ^[0-9]+$ ]]
+    then
+      die 'ERROR: "$interactive" is not valid, please run with -h'
+    fi
   fi
 }
 
