@@ -156,7 +156,7 @@ show_variables() {
   variablesArray+=( "id_rsa_pub_location=$id_rsa_pub_location" )
   variablesArray+=( "  optional" )
   variablesArray+=( "  -i/--id_rsa_pub_location" )
-  variablesArray+=( "  desc: the location of the id_rsa to use" )
+  variablesArray+=( "  desc: the directory of the id_rsa to use" )
   variablesArray+=( "  note: if left empty it will create an id_rsa at /home/\${admin_username}/.ssh/id_rsa.pub" )
   variablesArray+=( "" )
   variablesArray+=( "admin_username=$admin_username" )
@@ -167,7 +167,7 @@ show_variables() {
   variablesArray+=( "admin_ssh_password=$masked_ssh_password" )
   variablesArray+=( "  optional" )
   variablesArray+=( "  -s/--admin_ssh_password" )
-  variablesArray+=( "  desc: the password to use for the \${id_rsa_pub_location}" )
+  variablesArray+=( "  desc: the password to use for the id_rsa in \${id_rsa_pub_location}" )
   variablesArray+=( "  note: if left empty no password will be used (not recommended)" )
   variablesArray+=( "" )
   variablesArray+=( "" )
@@ -222,13 +222,7 @@ validate_variables() {
     fi
   fi
 
-  if [ ! -z "$id_rsa_pub_location" ]
-  then
-    if [ ! -f "$id_rsa_pub_location"]
-    then
-      die 'ERROR: "$id_rsa_pub_location" is not an existing file, please run with -h'
-    fi
-  fi
+  # assume valid $id_rsa_pub_location
 
   if [ ! is_valid_username "$admin_username" ]
   then
@@ -277,32 +271,35 @@ setup_pi() {
   most_recent_command_value=0
   if [ ! -z "${id_rsa_pub_location}" ]
   then
+    id_rsa_pub_location="/home/${admin_username}/.ssh/"
+  fi
+  if [ ! -f "${id_rsa_pub_location}id_rsa" ]
+  then
     if [ -z "${admin_ssh_password}" ]
     then
       write_block 2 "Creating id_rsa without password..."
-      ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N ""
+      ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N ""
       most_recent_command_value=$?
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen without password"
     else
-      ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N "${admin_ssh_password}"
+      ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}"
       most_recent_command_value=$?
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
     fi
-    id_rsa_pub_location="/home/${admin_username}/.ssh/id_rsa.pub"
   fi
   if [ -z "${admin_ssh_password}" ]
   then
     write_block 2 "Using id_rsa without password..."
-    ssh-add "${id_rsa_pub_location}"
+    ssh-add "${id_rsa_pub_location}id_rsa"
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "pi setup" "ssh-add without password"
   else
-    ssh_add_pass "${id_rsa_pub_location}" "${admin_ssh_password}"
+    ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}"
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "pi setup" "ssh-add with password"
   fi
   
-  scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/tmp/id_rsa.pub
+  scp "${id_rsa_pub_location}id_rsa.pub" ${admin_username}@${hostname}:/tmp/id_rsa.pub
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "pi setup" "scp"
   
@@ -322,7 +319,7 @@ setup_pi() {
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "pi setup" "ssh block #1"
   
-  ssh ${username}@${hostname} -i "${id_rsa_pub_location}" " \
+  ssh ${username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
     if [ $(id -u pi) ] \
     then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
@@ -361,13 +358,13 @@ setup_pi() {
     check_for_error $most_recent_command_value "pi setup" "installing k3sup"
   fi
   
-  k3sup install --host ${hostname} --user ${username} --ssh-key ${id_rsa_pub_location} --cluster
+  k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "pi setup" "k3sup install"
   
   if [ ! -z "${cluster_server_name}" ]
   then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key ${id_rsa_pub_location} --server
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "pi setup" "k3sup join"
   fi

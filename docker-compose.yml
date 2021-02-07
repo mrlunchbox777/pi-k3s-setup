@@ -8,3 +8,7 @@ services:
       dockerfile: dockerfile
     environment:
       env_file: .env
+    volumes:
+      - type: volume
+        source: .docker-data
+        target: /root
