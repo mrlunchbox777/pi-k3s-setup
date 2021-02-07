@@ -155,6 +155,7 @@ show_variables() {
   variablesArray+=( "  optional" )
   variablesArray+=( "  -y/--interactive" )
   variablesArray+=( "  desc: flag, allow user interaction, should always be false running on docker" )
+  variablesArray+=( "  note: non-interactive=0 interactive=1" )
   variablesArray+=( "" )
   variablesArray+=( "verbose=$verbose" )
   variablesArray+=( "  optional" )
@@ -220,14 +221,14 @@ validate_variables() {
 
   if [ ! -z "$interactive" ]
   then
-    if [[ ! "$interactive" =~ ^[0-9]+$ ]]
+    if [[ ! "$interactive" =~ ^[0-1]+$ ]]
     then
       die 'ERROR: "$interactive" is not valid, please run with -h'
     fi
   fi
 }
 
-write_block "Starting Runme"
+write_block "Starting Up"
 
 # Parse Parameters
 while :; do
