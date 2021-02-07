@@ -7,6 +7,7 @@ $cluster_server_ip="${cluster_server_ip}"
 $id_rsa_pub_location="${id_rsa_pub_location}"
 $admin_username="${admin_username}"
 $admin_ssh_password="${admin_ssh_password}"
+$run_type="${run_type:-help}"
 
 delimiter="*******************************************************"
 
@@ -44,7 +45,27 @@ write_instructions() {
   instructionArray+=( "      1. Set to 16" )
   instructionArray+=( "  d. Reload ssh, choose one of the following" )
   instructionArray+=( "    i. sudo service ssh restart" )
-  instructionArray+=( "    i. sudo reboot now" )
+  instructionArray+=( "    ii. sudo reboot now" )
+  instructionArray+=( "2. Set variables" )
+  instructionArray+=( "  a. Run this utility (see 3) with the run_type variable set to run to check variable values," )
+  instructionArray+=( "    and then answer no on the prompt proceed" )
+  instructionArray+=( "  b. Some values have good defaults which will be shown at the verification string" )
+  instructionArray+=( "  c. Every value must be set unless it's stated otherwise" )
+  instructionArray+=( "  d. Every value can be set in the following ways" )
+  instructionArray+=( "    i. Set the environment variable with the same name as the variable" )
+  instructionArray+=( "    ii. (Docker only) Set the environment variable in the .env file" )
+  instructionArray+=( "      with the same name as the variable" )
+  instructionArray+=( "    iii. (Host only) Set the parameter with the same name as the variable" )
+  instructionArray+=( "3. Run Utility" )
+  instructionArray+=( "  a. The utility can be run several different ways" )
+  instructionArray+=( "    i. Docker" )
+  instructionArray+=( "      1. Navigate to the root of the repo" )
+  instructionArray+=( "      2. cp template.env .env" )
+  instructionArray+=( "      3. Modify .env as desired (see 2)" )
+  instructionArray+=( "      4. docker-compose up" )
+  instructionArray+=( "    ii. Host" )
+  instructionArray+=( "      1. Set the variables (see 2)" )
+  instructionArray+=( "      2. Run the script" )
   instructionArray+=( "" )
 
   write_block "${instructionArray[@]}"
@@ -63,36 +84,38 @@ write_variables() {
   variablesArray+=( "hostname - $hostname" )
   variablesArray+=( "username - $username" )
   variablesArray+=( "password - $masked_password" )
-  variablesArray+=( "*cluster_server_ip - $cluster_server_ip" )
+  variablesArray+=( "cluster_server_ip - $cluster_server_ip" )
+  variablesArray+=( "  note: cluster_server_ip can be left empty and it won't join a cluster" )
   variablesArray+=( "" )
   variablesArray+=( "Admin Machine Variables" )
   variablesArray+=( "" )
-  variablesArray+=( "*id_rsa_pub_location - $id_rsa_pub_location" )
+  variablesArray+=( "id_rsa_pub_location - $id_rsa_pub_location" )
   variablesArray+=( "admin_username - $admin_username" )
   variablesArray+=( "admin_ssh_password - $masked_ssh_password" )
+  variablesArray+=( "" )
+  variablesArray+=( "Utility Variables" )
+  variablesArray+=( "" )
+  variablesArray+=( "run_type - $run_type" )
   variablesArray+=( "" )
 
   variablesArray+=( "" )
   write_block "${variablesArray[@]}"
 }
-### Variables
-
-# * hostname
-#   * on the pi
-# * username
-#   * on the pi
-# * password
-#   * on the pi
-# * id_rsa_pub_location
-#   * on the admin machine
-# * admin_username
-#   * on the admin machine
-# * admin_ssh_password
-#   * on the admin machine
-# * cluster_server_ip
-#   * if set will join, if not it won't
 
 write_block "Starting Runme"
+$cluster_server_ip="${cluster_server_ip}"
+$id_rsa_pub_location="${id_rsa_pub_location}"
+$admin_username="${admin_username}"
+$admin_ssh_password="${admin_ssh_password}"
+$run_type="${run_type:-help}"
+while getopts "hostname:username:password:" opts; do
+   case ${opts} in
+      hostname) hostname=${OPTARG} ;;
+      username) username=${OPTARG} ;;
+      password) password=${OPTARG} ;;
+      [?]) write_block "argument $opts unknown" ;;
+   esac
+done
 # * &&& Write out safe variables and verify go &&&&
 if [ ! -z "${id_rsa_pub_location}" ]
 then
