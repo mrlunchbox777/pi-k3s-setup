@@ -8,6 +8,7 @@ cluster_server_ip="${cluster_server_ip}"
 id_rsa_pub_location="${id_rsa_pub_location}"
 admin_username="${admin_username}"
 admin_ssh_password="${admin_ssh_password}"
+run_type="${run_type:-help}"
 verbose=0
 
 die() {
@@ -107,131 +108,143 @@ show_variables() {
   write_block "${variablesArray[@]}"
 }
 
-parse_parameters() {
-  while :; do
-    case $1 in
-      -h|-\?|--help)
-        show_help    # Display a usage synopsis.
-        exit
-        ;;
-      -hn|--hostname)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          hostname=$2
-          shift
-        else
-          die 'ERROR: "--hostname" requires a non-empty option argument.'
-        fi
-        ;;
-      --hostname=?*)
-        hostname=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --hostname=)         # Handle the case of an empty --file=
-        die 'ERROR: "--hostname" requires a non-empty option argument.'
-        ;;
-      -u|--username)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          file=$2
-          shift
-        else
-          die 'ERROR: "--username" requires a non-empty option argument.'
-        fi
-        ;;
-      --username=?*)
-        username=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --username=)         # Handle the case of an empty --file=
-        die 'ERROR: "--username" requires a non-empty option argument.'
-        ;;
-      -p|--password)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          file=$2
-          shift
-        else
-          die 'ERROR: "--password" requires a non-empty option argument.'
-        fi
-        ;;
-      --password=?*)
-        password=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --password=)         # Handle the case of an empty --file=
-        die 'ERROR: "--password" requires a non-empty option argument.'
-        ;;
-      -c|--cluster_server_ip)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          file=$2
-          shift
-        else
-          die 'ERROR: "--cluster_server_ip" requires a non-empty option argument.'
-        fi
-        ;;
-      --cluster_server_ip=?*)
-        cluster_server_ip=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --cluster_server_ip=)         # Handle the case of an empty --file=
-        die 'ERROR: "--cluster_server_ip" requires a non-empty option argument.'
-        ;;
-      -i|--id_rsa_pub_location)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          file=$2
-          shift
-        else
-          die 'ERROR: "--id_rsa_pub_location" requires a non-empty option argument.'
-        fi
-        ;;
-      --id_rsa_pub_location=?*)
-        id_rsa_pub_location=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --id_rsa_pub_location=)         # Handle the case of an empty --file=
-        die 'ERROR: "--id_rsa_pub_location" requires a non-empty option argument.'
-        ;;
-      -a|--admin_username)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          file=$2
-          shift
-        else
-          die 'ERROR: "--admin_username" requires a non-empty option argument.'
-        fi
-        ;;
-      --admin_username=?*)
-        admin_username=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --admin_username=)         # Handle the case of an empty --file=
-        die 'ERROR: "--admin_username" requires a non-empty option argument.'
-        ;;
-      -s|--admin_ssh_password)       # Takes an option argument; ensure it has been specified.
-        if [ "$2" ]; then
-          file=$2
-          shift
-        else
-          die 'ERROR: "--admin_ssh_password" requires a non-empty option argument.'
-        fi
-        ;;
-      --admin_ssh_password=?*)
-        admin_ssh_password=${1#*=} # Delete everything up to "=" and assign the remainder.
-        ;;
-      --admin_ssh_password=)         # Handle the case of an empty --file=
-        die 'ERROR: "--admin_ssh_password" requires a non-empty option argument.'
-        ;;
-      -v|--verbose)
-        verbose=$((verbose + 1))  # Each -v adds 1 to verbosity.
-        ;;
-      --)              # End of all options.
-        shift
-        break
-        ;;
-      -?*)
-        printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
-        ;;
-      *)               # Default case: No more options, so break out of the loop.
-        break
-    esac
-    shift
-  done
-}
-
 write_block "Starting Runme"
 
-parse_parameters
+# Parse Parameters
+while :; do
+  case $1 in
+    -h|-\?|--help)
+      show_help    # Display a usage synopsis.
+      exit
+      ;;
+    -hn|--hostname)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        hostname=$2
+        shift
+      else
+        die 'ERROR: "--hostname" requires a non-empty option argument.'
+      fi
+      ;;
+    --hostname=?*)
+      hostname=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --hostname=)         # Handle the case of an empty --file=
+      die 'ERROR: "--hostname" requires a non-empty option argument.'
+      ;;
+    -u|--username)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        username=$2
+        shift
+      else
+        die 'ERROR: "--username" requires a non-empty option argument.'
+      fi
+      ;;
+    --username=?*)
+      username=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --username=)         # Handle the case of an empty --file=
+      die 'ERROR: "--username" requires a non-empty option argument.'
+      ;;
+    -p|--password)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        password=$2
+        shift
+      else
+        die 'ERROR: "--password" requires a non-empty option argument.'
+      fi
+      ;;
+    --password=?*)
+      password=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --password=)         # Handle the case of an empty --file=
+      die 'ERROR: "--password" requires a non-empty option argument.'
+      ;;
+    -c|--cluster_server_ip)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        cluster_server_ip=$2
+        shift
+      else
+        die 'ERROR: "--cluster_server_ip" requires a non-empty option argument.'
+      fi
+      ;;
+    --cluster_server_ip=?*)
+      cluster_server_ip=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --cluster_server_ip=)         # Handle the case of an empty --file=
+      die 'ERROR: "--cluster_server_ip" requires a non-empty option argument.'
+      ;;
+    -i|--id_rsa_pub_location)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        id_rsa_pub_location=$2
+        shift
+      else
+        die 'ERROR: "--id_rsa_pub_location" requires a non-empty option argument.'
+      fi
+      ;;
+    --id_rsa_pub_location=?*)
+      id_rsa_pub_location=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --id_rsa_pub_location=)         # Handle the case of an empty --file=
+      die 'ERROR: "--id_rsa_pub_location" requires a non-empty option argument.'
+      ;;
+    -a|--admin_username)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        admin_username=$2
+        shift
+      else
+        die 'ERROR: "--admin_username" requires a non-empty option argument.'
+      fi
+      ;;
+    --admin_username=?*)
+      admin_username=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --admin_username=)         # Handle the case of an empty --file=
+      die 'ERROR: "--admin_username" requires a non-empty option argument.'
+      ;;
+    -s|--admin_ssh_password)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        admin_ssh_password=$2
+        shift
+      else
+        die 'ERROR: "--admin_ssh_password" requires a non-empty option argument.'
+      fi
+      ;;
+    --admin_ssh_password=?*)
+      admin_ssh_password=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --admin_ssh_password=)         # Handle the case of an empty --file=
+      die 'ERROR: "--admin_ssh_password" requires a non-empty option argument.'
+      ;;
+    -r|--run_type)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        run_type=$2
+        shift
+      else
+        die 'ERROR: "--run_type" requires a non-empty option argument.'
+      fi
+      ;;
+    --run_type=?*)
+      run_type=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --run_type=)         # Handle the case of an empty --file=
+      die 'ERROR: "--run_type" requires a non-empty option argument.'
+      ;;
+    -v|--verbose)
+      verbose=$((verbose + 1))  # Each -v adds 1 to verbosity.
+      ;;
+    --)              # End of all options.
+      shift
+      break
+      ;;
+    -?*)
+      printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+      ;;
+    *)               # Default case: No more options, so break out of the loop.
+      break
+  esac
+  shift
+done
+
 show_variables
 exit
 
