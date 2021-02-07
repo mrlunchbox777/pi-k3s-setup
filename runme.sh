@@ -58,6 +58,10 @@ is_valid_username() {
   [[ $1 =~ $re ]] # return value of this comparison is used for the function
 }
 
+ssh_add_pass() {
+  ./ssh-add-pass.sh "$1" "$2"
+}
+
 show_help() {
   instructionArray=( "" )
   instructionArray+=( "1. Get the pi accessible" )
@@ -272,14 +276,31 @@ setup_pi() {
   most_recent_command_value=0
   if [ ! -z "${id_rsa_pub_location}" ]
   then
-    ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N "${admin_ssh_password}"
-    most_recent_command_value=$?
-    check_for_error $most_recent_command_value "pi setup" "ssh-keygen"
+    if [ -z "${admin_ssh_password}" ]
+    then
+      write_block 2 "Creating id_rsa without password..."
+      ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N ""
+      most_recent_command_value=$?
+      check_for_error $most_recent_command_value "pi setup" "ssh-keygen without password"
+    else
+      ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N "${admin_ssh_password}"
+      most_recent_command_value=$?
+      check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
+    fi
     id_rsa_pub_location="/home/${admin_username}/.ssh/id_rsa.pub"
   fi
-  echo -e "${admin_ssh_password}" | ssh-add -p "${id_rsa_pub_location}"
-  most_recent_command_value=$?
-  check_for_error $most_recent_command_value "pi setup" "ssh-add"
+  if [ -z "${admin_ssh_password}" ]
+  then
+    write_block 2 "Using id_rsa without password..."
+    ssh-add "${id_rsa_pub_location}"
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "pi setup" "ssh-add without password"
+  else
+    ssh_add_pass "${id_rsa_pub_location}" "${admin_ssh_password}"
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "pi setup" "ssh-add with password"
+  fi
+  
   scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/tmp/id_rsa.pub
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "pi setup" "scp"
