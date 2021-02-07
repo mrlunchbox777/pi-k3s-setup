@@ -285,8 +285,11 @@ setup_pi() {
   check_for_error $most_recent_command_value "pi setup" "scp"
   
   ssh pi@{hostname} -praspberry " \
-    echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
-    echo -e \"${password}\" | passwd ${username}; \
+    if [ ! $(id -u ${username}) ] \
+    then \
+      echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
+      echo -e \"${password}\" | passwd ${username}; \
+    fi \
     echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     cat /tmp/id_rsa.pub >> /home/${username}/.ssh/authorized_keys; \
     rm /tmp/id_rsa.pub; \
@@ -298,20 +301,22 @@ setup_pi() {
   check_for_error $most_recent_command_value "pi setup" "ssh block #1"
   
   ssh ${username}@${hostname} -i "${id_rsa_pub_location}" " \
-    echo -e \"${password}\" | sudo -S userdel -r pi; \
+    if [ $(id -u pi) ] \
+    then \
+      echo -e \"${password}\" | sudo -S userdel -r pi; \
+    fi \
     case \`grep -Fx \"$FILENAME\" \"$LIST\" >/dev/null; echo \$?\` in \
       0) \
         echo \"/boot/cmdline.txt already updated\" \
         ;; \
       1) \
-        # code if not found \
+        echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
         ;; \
       *) \
         echo \"an error occurred, check logs for details\" \
         exit 1 \
         ;; \
     esac \
-    echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
     echo -e \"${password}\" | sudo -S apt-get update; \
     echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
