@@ -14,12 +14,10 @@ delimiter="*******************************************************"
 force_help=0
 
 write_block() {
-  if [ $1 -le $verbose ]
-  then
+  if [ $1 -le $verbose ]; then
     set -- "${@:2}"
     prefix=""
-    if [ $verbose -ge 2 ]
-    then
+    if [ $verbose -ge 2 ]; then
       prefix="* $(date) - "
       echo ""
       echo "$delimiter"
@@ -30,8 +28,7 @@ write_block() {
       echo "${prefix}${i}"
     done
 
-    if [ $verbose -ge 2 ]
-    then
+    if [ $verbose -ge 2 ]; then
       echo "$delimiter"
     fi
     echo ""
@@ -46,8 +43,7 @@ die() {
 
 check_for_error() {
   write_block 2 "Just ran $3"
-  if [ $1 -gt 0 ]
-  then
+  if [ $1 -gt 0 ]; then
     die "An error occurred during $2. Check logs for more detail."
   fi
 }
@@ -201,58 +197,48 @@ show_variables() {
 
 validate_variables() {
   host "$hostname" 2>&s > /dev/null
-  if [ ! $? -eq 0 ]
-  then
+  if [ ! $? -eq 0 ]; then
     die 'ERROR: "$hostname" is not a valid hostname, please run with -h'
   fi
 
-  if [ ! is_valid_username "$username" ]
-  then
+  if [ ! is_valid_username "$username" ]; then
     die 'ERROR: "$username" is not a valid username, please run with -h'
   fi
 
   # assume valid $password
 
-  if [ ! -z "$cluster_server_name" ]
-  then
+  if [ ! -z "$cluster_server_name" ]; then
     host "$cluster_server_name" 2>&s > /dev/null
-    if [ ! $? -eq 0 ]
-    then
+    if [ ! $? -eq 0 ]; then
       die 'ERROR: "$cluster_server_name" is not a valid hostname, please run with -h'
     fi
   fi
 
   # assume valid $id_rsa_pub_location
 
-  if [ ! is_valid_username "$admin_username" ]
-  then
+  if [ ! is_valid_username "$admin_username" ]; then
     die 'ERROR: "$admin_username" is not a valid username, please run with -h'
   fi
 
   # assume valid $admin_ssh_password
 
-  if [[ ! "$run_type" =~ ^[help|run]$ ]]
-  then
+  if [[ ! "$run_type" =~ ^[help|run]$ ]]; then
     die 'ERROR: "$run_type" is not valid, please run with -h'
   fi
 
-  if [[ ! "$verbose" =~ ^[0-9]+$ ]]
-  then
+  if [[ ! "$verbose" =~ ^[0-9]+$ ]]; then
     die 'ERROR: "$verbose" is not valid, please run with -h'
   fi
 
-  if [ ! -z "$interactive" ]
-  then
-    if [[ ! "$interactive" =~ ^[0-1]+$ ]]
-    then
+  if [ ! -z "$interactive" ]; then
+    if [[ ! "$interactive" =~ ^[0-1]+$ ]]; then
       die 'ERROR: "$interactive" is not valid, please run with -h'
     fi
   fi
 }
 
 confirm_run() {
-  if [ $interactive -gt 0 ]
-  then
+  if [ $interactive -gt 0 ]; then
     read -r -p "Are you sure? [y/N] " response
     case "$response" in
       [yY][eE][sS]|[yY]) 
@@ -269,14 +255,11 @@ confirm_run() {
 
 setup_pi() {
   most_recent_command_value=0
-  if [ ! -z "${id_rsa_pub_location}" ]
-  then
+  if [ ! -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
   fi
-  if [ ! -f "${id_rsa_pub_location}id_rsa" ]
-  then
-    if [ -z "${admin_ssh_password}" ]
-    then
+  if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
+    if [ -z "${admin_ssh_password}" ]; then
       write_block 2 "Creating id_rsa without password..."
       ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N ""
       most_recent_command_value=$?
@@ -287,8 +270,7 @@ setup_pi() {
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
     fi
   fi
-  if [ -z "${admin_ssh_password}" ]
-  then
+  if [ -z "${admin_ssh_password}" ]; then
     write_block 2 "Using id_rsa without password..."
     ssh-add "${id_rsa_pub_location}id_rsa"
     most_recent_command_value=$?
@@ -347,8 +329,7 @@ setup_pi() {
   write_block 2 "Waiting 5 seconds for reboot..."
   sleep 5
   
-  if [ -z /usr/local/bin/k3sup ]
-  then
+  if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3s"
     curl -sLS https://get.k3sup.dev | sh
     most_recent_command_value=$?
@@ -362,8 +343,7 @@ setup_pi() {
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "pi setup" "k3sup install"
   
-  if [ ! -z "${cluster_server_name}" ]
-  then
+  if [ ! -z "${cluster_server_name}" ]; then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "pi setup" "k3sup join"
@@ -522,15 +502,13 @@ done
 
 write_block 1 "Starting Up"
 
-if [ $force_help -eq 1 ]
-then
+if [ $force_help -eq 1 ]; then
   run_type="help"
 fi
 
 show_variables
 
-if [ $run_type = "run" ]
-then
+if [ $run_type = "run" ]; then
   validate_variables
   confirm_run
   setup_pi
