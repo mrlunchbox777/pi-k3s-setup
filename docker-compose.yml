@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  runme:
+    image: pi-k3s-steup
+    build:
+      context: .
+      dockerfile: dockerfile
+    environment:
+      env_file: .env
