@@ -67,10 +67,9 @@ ssh_add_pass() {
 show_help() {
   instructionArray=( "" )
   instructionArray+=( "1. Get the pi accessible" )
-  instructionArray+=( "  a. Get the boot drive ready, format using the following" )
-  instructionArray+=( "    i. &&& add more instruction here &&&" )
-  instructionArray+=( "    ii. balenaEtcher - https://www.balena.io/etcher/" )
-  instructionArray+=( "    iii. Rasbian Lite - https://www.raspberrypi.org/software/operating-systems/" )
+  instructionArray+=( "  a. Get the boot drive ready, format the drive using the following" )
+  instructionArray+=( "    i. balenaEtcher - https://www.balena.io/etcher/" )
+  instructionArray+=( "    ii. Rasbian Lite - https://www.raspberrypi.org/software/operating-systems/" )
   instructionArray+=( "  b. boot & login" )
   instructionArray+=( "    i. u: pi" )
   instructionArray+=( "    ii. p: raspberry" )
