@@ -201,7 +201,7 @@ validate_variables() {
 
   if [[ ! "$verbose" =~ ^[0-9]+$ ]]
   then
-    die 'ERROR: "$run_type" is not valid, please run with -h'
+    die 'ERROR: "$verbose" is not valid, please run with -h'
   fi
 }
 
