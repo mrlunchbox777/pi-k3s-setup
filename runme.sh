@@ -4,12 +4,12 @@ delimiter="*******************************************************"
 hostname="${hostname}"
 username="${username}"
 password="${password}"
-cluster_server_ip="${cluster_server_ip}"
+cluster_server_name="${cluster_server_name}"
 id_rsa_pub_location="${id_rsa_pub_location}"
 admin_username="${admin_username}"
 admin_ssh_password="${admin_ssh_password}"
 run_type="${run_type:-help}"
-verbose=0
+verbose="${verbose:-0}"
 
 die() {
   printf '%s\n' "$1" >&2
@@ -81,47 +81,78 @@ show_variables() {
   local masked_ssh_password=$(echo -e $admin_ssh_password | sed "s#1/#\*/#")
 
   variablesArray=( "" )
-  variablesArray+=( "Using The Following Variables" )
+  variablesArray+=( "----- Using The Following Variables -----" )
+  variablesArray+=( "" )
+  variablesArray+=( "Any of these parameters can be provided by environment variables." )
+  variablesArray+=( "The environment variable name is the same as the long name, e.g. hostname." )
   variablesArray+=( "" )
   variablesArray+=( "" )
-  variablesArray+=( "Pi Variables" )
   variablesArray+=( "" )
-  variablesArray+=( "hostname - $hostname" )
+  variablesArray+=( "--- Pi Variables ---" )
+  variablesArray+=( "" )
+  variablesArray+=( "" )
+  variablesArray+=( "hostname=$hostname" )
   variablesArray+=( "  required" )
-  variablesArray+=( "  note: " )
-  variablesArray+=( "username - $username" )
+  variablesArray+=( "  -hn/--hostname" )
+  variablesArray+=( "  desc: the DNS addressable name of the target" )
+  variablesArray+=( "" )
+  variablesArray+=( "username=$username" )
   variablesArray+=( "  required" )
-  variablesArray+=( "  note: " )
-  variablesArray+=( "password - $masked_password" )
+  variablesArray+=( "  -u/--username" )
+  variablesArray+=( "  desc: the username for the new account on the target" )
+  variablesArray+=( "" )
+  variablesArray+=( "password=$masked_password" )
   variablesArray+=( "  required" )
-  variablesArray+=( "  note: " )
-  variablesArray+=( "cluster_server_ip - $cluster_server_ip" )
-  variablesArray+=( "  optional" )
-  variablesArray+=( "  note: cluster_server_ip can be left empty and it won't join a cluster" )
+  variablesArray+=( "  -p/--password" )
+  variablesArray+=( "  desc: the password for the new account on the target" )
   variablesArray+=( "" )
-  variablesArray+=( "Admin Machine Variables" )
-  variablesArray+=( "" )
-  variablesArray+=( "id_rsa_pub_location - $id_rsa_pub_location" )
+  variablesArray+=( "cluster_server_name=$cluster_server_name" )
   variablesArray+=( "  optional" )
-  variablesArray+=( "  note: " )
-  variablesArray+=( "admin_username - $admin_username" )
+  variablesArray+=( "  -c/--cluster_server_name" )
+  variablesArray+=( "  desc: the DNS addressable name of the cluster" )
+  variablesArray+=( "  note: cluster_server_name can be left empty and the target won't join a cluster" )
+  variablesArray+=( "" )
+  variablesArray+=( "" )
+  variablesArray+=( "--- Admin Machine Variables ---" )
+  variablesArray+=( "" )
+  variablesArray+=( "" )
+  variablesArray+=( "id_rsa_pub_location=$id_rsa_pub_location" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -i/--id_rsa_pub_location" )
+  variablesArray+=( "  desc: the location of the id_rsa to use" )
+  variablesArray+=( "  note: if left empty it will create an id_rsa at /home/\${admin_username}/.ssh/id_rsa.pub" )
+  variablesArray+=( "" )
+  variablesArray+=( "admin_username=$admin_username" )
   variablesArray+=( "  required" )
-  variablesArray+=( "  note: " )
-  variablesArray+=( "admin_ssh_password - $masked_ssh_password" )
-  variablesArray+=( "  optional" )
-  variablesArray+=( "  note: " )
+  variablesArray+=( "  -a/--admin_username" )
+  variablesArray+=( "  desc: the username to use on the Admin Machine" )
   variablesArray+=( "" )
-  variablesArray+=( "Utility Variables" )
+  variablesArray+=( "admin_ssh_password=$masked_ssh_password" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -s/--admin_ssh_password" )
+  variablesArray+=( "  desc: the password to use for the \${id_rsa_pub_location}" )
+  variablesArray+=( "  note: if left empty no password will be used (not recommended)" )
   variablesArray+=( "" )
-  variablesArray+=( "run_type - $run_type" )
+  variablesArray+=( "" )
+  variablesArray+=( "--- Utility Variables ---" )
+  variablesArray+=( "" )
+  variablesArray+=( "" )
+  variablesArray+=( "run_type=$run_type" )
   variablesArray+=( "  optional" )
-  variablesArray+=( "  note: " )
-  variablesArray+=( "verbose - $verbose" )
+  variablesArray+=( "  -r/--run_type" )
+  variablesArray+=( "  desc: what operation to perform, valid options are help and run" )
+  variablesArray+=( "" )
+  variablesArray+=( "verbose=$verbose" )
   variablesArray+=( "  optional" )
-  variablesArray+=( "  note: " )
+  variablesArray+=( "  -v/--verbose" )
+  variablesArray+=( "  desc: the verbosity level to use, this can be used parameter multiple times" )
+  variablesArray+=( "    example: -v -v gives you verbosity level 2" )
+  variablesArray+=( "    levels:" )
+  variablesArray+=( "      0: minimal, only what needs to be shown and errors" )
+  variablesArray+=( "      1: info, basic info (recommended)" )
+  variablesArray+=( "      2: debug, all logs" )
   variablesArray+=( "" )
 
-  variablesArray+=( "" )
   write_block "${variablesArray[@]}"
 }
 
@@ -176,19 +207,19 @@ while :; do
     --password=)         # Handle the case of an empty --file=
       die 'ERROR: "--password" requires a non-empty option argument.'
       ;;
-    -c|--cluster_server_ip)       # Takes an option argument; ensure it has been specified.
+    -c|--cluster_server_name)       # Takes an option argument; ensure it has been specified.
       if [ "$2" ]; then
-        cluster_server_ip=$2
+        cluster_server_name=$2
         shift
       else
-        die 'ERROR: "--cluster_server_ip" requires a non-empty option argument.'
+        die 'ERROR: "--cluster_server_name" requires a non-empty option argument.'
       fi
       ;;
-    --cluster_server_ip=?*)
-      cluster_server_ip=${1#*=} # Delete everything up to "=" and assign the remainder.
+    --cluster_server_name=?*)
+      cluster_server_name=${1#*=} # Delete everything up to "=" and assign the remainder.
       ;;
-    --cluster_server_ip=)         # Handle the case of an empty --file=
-      die 'ERROR: "--cluster_server_ip" requires a non-empty option argument.'
+    --cluster_server_name=)         # Handle the case of an empty --file=
+      die 'ERROR: "--cluster_server_name" requires a non-empty option argument.'
       ;;
     -i|--id_rsa_pub_location)       # Takes an option argument; ensure it has been specified.
       if [ "$2" ]; then
@@ -297,9 +328,9 @@ then
     sudo install k3sup /usr/local/bin/
 fi
 k3sup install --host ${hostname} --user ${username} --ssh-key ${id_rsa_pub_location} --cluster
-if [ ! -z "${cluster_server_ip}" ]
+if [ ! -z "${cluster_server_name}" ]
 then
-    k3sup join --host ${hostname} --user ${username} --server-host ${hostname} --server-user ${username} --ssh-key ${id_rsa_pub_location} --server
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key ${id_rsa_pub_location} --server
 fi
 
 ### After
