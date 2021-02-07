@@ -156,6 +156,32 @@ show_variables() {
   write_block "${variablesArray[@]}"
 }
 
+is_valid_username() {
+  local re='^[[:lower:]_][[:lower:][:digit:]_-]{2,15}$'
+  (( ${#1} > 16 )) && return 1
+  [[ $1 =~ $re ]] # return value of this comparison is used for the function
+}
+
+validate_variables() {
+  host "$hostname" 2>&s > /dev/null
+  if [ ! $? -eq 0 ]
+  then
+    die 'ERROR "$hostname" is not a valid hostname, please run with -h'
+  fi
+
+  if [ is_valid_username "$username" ]
+  then
+    die 'ERROR "$username" is not a valid username, please run with -h'
+  fi
+  # password="${password}"
+  # cluster_server_name="${cluster_server_name}"
+  # id_rsa_pub_location="${id_rsa_pub_location}"
+  # admin_username="${admin_username}"
+  # admin_ssh_password="${admin_ssh_password}"
+  # run_type="${run_type:-help}"
+  # verbose="${verbose:-0}"
+}
+
 write_block "Starting Runme"
 
 # Parse Parameters
