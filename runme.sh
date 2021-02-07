@@ -10,6 +10,7 @@ admin_username="${admin_username}"
 admin_ssh_password="${admin_ssh_password}"
 run_type="${run_type:-help}"
 verbose="${verbose:-0}"
+interactive="${interactive:-1}"
 
 die() {
   printf '%s\n' "$1" >&2
@@ -92,6 +93,8 @@ show_variables() {
   variablesArray+=( "Any of these parameters can be provided by environment variables." )
   variablesArray+=( "The environment variable name is the same as the long name, e.g. hostname." )
   variablesArray+=( "" )
+  variablesArray+=( "HELP -h/-?/-help" )
+  variablesArray+=( "" )
   variablesArray+=( "" )
   variablesArray+=( "" )
   variablesArray+=( "--- Pi Variables ---" )
@@ -148,10 +151,15 @@ show_variables() {
   variablesArray+=( "  -r/--run_type" )
   variablesArray+=( "  desc: what operation to perform, valid options are help and run" )
   variablesArray+=( "" )
+  variablesArray+=( "interactive=$interactive" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -y/--interactive" )
+  variablesArray+=( "  desc: flag, allow user interaction, should always be false running on docker" )
+  variablesArray+=( "" )
   variablesArray+=( "verbose=$verbose" )
   variablesArray+=( "  optional" )
   variablesArray+=( "  -v/--verbose" )
-  variablesArray+=( "  desc: the verbosity level to use, this can be used parameter multiple times" )
+  variablesArray+=( "  desc: flag, the verbosity level to use, this can be used parameter multiple times" )
   variablesArray+=( "    example: -v -v gives you verbosity level 2" )
   variablesArray+=( "    levels:" )
   variablesArray+=( "      0: minimal, only what needs to be shown and errors" )
@@ -325,6 +333,9 @@ while :; do
       ;;
     --run_type=)         # Handle the case of an empty --file=
       die 'ERROR: "--run_type" requires a non-empty option argument.'
+      ;;
+    -y|--interactive)       # Takes an option argument; ensure it has been specified.
+        interactive=1
       ;;
     -v|--verbose)
       verbose=$((verbose + 1))  # Each -v adds 1 to verbosity.
