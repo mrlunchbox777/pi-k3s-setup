@@ -237,20 +237,20 @@ setup_pi() {
   echo -e "${admin_ssh_password}" | ssh-add -p "${id_rsa_pub_location}"
   scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/home/${username}/.ssh/authorized_keys
   
-  ssh pi@{hostname} -praspberry '
-    echo -e raspberry | sudo -S useradd -m -G sudo ${username};
-    echo -e ${password} | passwd ${username};
-    echo -e raspberry | sudo -S sed -i '"'"'s/#PasswordAuthentication.*/PasswordAuthentication no/'"'"' /etc/ssh/sshd_config;
-  '
+  ssh pi@{hostname} -praspberry " \
+    echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
+    echo -e ${password} | passwd ${username}; \
+    echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
+  "
   
-  ssh ${username}@${hostname} -i "${id_rsa_pub_location}" '
-    echo -e ${password} | sudo -S userdel -r pi
-    echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt
-    echo -e ${password} | sudo -S apt-get update
-    echo -e ${password} | sudo -S apt-get upgrade -y
-    echo -e ${password} | sudo -S apt-get autoremove -y
-    sudo reboot now
-  '
+  ssh ${username}@${hostname} -i "${id_rsa_pub_location}" " \
+    echo -e ${password} | sudo -S userdel -r pi; \
+    echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt; \
+    echo -e ${password} | sudo -S apt-get update; \
+    echo -e ${password} | sudo -S apt-get upgrade -y; \
+    echo -e ${password} | sudo -S apt-get autoremove -y; \
+    sudo reboot now; \
+  "
   
   write_block "Waiting 5 seconds for reboot..."
   sleep 5
@@ -420,7 +420,7 @@ if [ $run_type -eq "run" ]
 then
   validate_variables
   # check if should run
-  # run
+  setup_pi
 else
   show_help
   exit
