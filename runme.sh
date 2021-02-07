@@ -19,14 +19,18 @@ die() {
 }
 
 write_block() {
-  echo ""
-  echo "$delimiter"
-  for i in "$@"
-  do
-    echo "* $(date) - $i"
-  done
-  echo "$delimiter"
-  echo ""
+  if [ $1 -le $verbose]
+  then
+    set -- "${@:2}"
+    echo ""
+    echo "$delimiter"
+    for i in "$@"
+    do
+      echo "* $(date) - $i"
+    done
+    echo "$delimiter"
+    echo ""
+  fi
 }
 
 is_valid_username() {
@@ -80,7 +84,7 @@ show_help() {
   instructionArray+=( "      2. Run the script" )
   instructionArray+=( "" )
 
-  write_block "${instructionArray[@]}"
+  write_block 1 "${instructionArray[@]}"
 }
 
 show_variables() {
@@ -168,7 +172,7 @@ show_variables() {
   variablesArray+=( "      2: debug, all logs" )
   variablesArray+=( "" )
 
-  write_block "${variablesArray[@]}"
+  write_block 1 "${variablesArray[@]}"
 }
 
 validate_variables() {
@@ -257,12 +261,12 @@ setup_pi() {
     sudo reboot now; \
   "
   
-  write_block "Waiting 5 seconds for reboot..."
+  write_block 2 "Waiting 5 seconds for reboot..."
   sleep 5
   
   if [ -z /usr/local/bin/k3sup ]
   then
-    write_block "Installing k3s"
+    write_block 2 "Installing k3s"
     curl -sLS https://get.k3sup.dev | sh
     sudo install k3sup /usr/local/bin/
   fi
@@ -412,7 +416,7 @@ while :; do
   shift
 done
 
-write_block "Starting Up"
+write_block 1 "Starting Up"
 
 if [ $force_help -eq 1 ]
 then
@@ -427,6 +431,7 @@ then
   # check if should run
   setup_pi
 else
+  verbose=$((verbose + 1))
   show_help
   exit
 fi
