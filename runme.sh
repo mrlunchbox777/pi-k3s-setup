@@ -59,7 +59,9 @@ is_valid_username() {
 }
 
 ssh_add_pass() {
-  ./ssh-add-pass.sh "$1" "$2"
+  local ssh_file="$1"
+  local ssh_password="$2"
+  SSH_ASKPASS=./ssh_give_pass.sh ssh-add "$ssh_file" <<< "$ssh_password"
 }
 
 show_help() {
@@ -373,13 +375,16 @@ setup_pi() {
 }
 
 post_run() {
-  ### After
-  
-  # * &&& mention basically done &&&&
-  # * &&& update sshd_config to not allow passwords &&&
-  # * 
-  # * &&& Write out safe variables and notify successful end &&&&
-  # * &&& Suggest that the security conscious change their secrets (password, sshkey, find others) &&&
+  write_block 1 "Successful Run"
+  show_variables
+  postRunArray=( "" )
+  postRunArray+=( "Successful Run" )
+  postRunArray+=( "For the security conscious consider changing the following:" )
+  postRunArray+=( "  - password on the pi" )
+  postRunArray+=( "  - the password for the sshkey" )
+
+  postRunArray+=( "" )
+  write_block 1 "${postRunArray[@]}"
 }
 
 # Parse Parameters
