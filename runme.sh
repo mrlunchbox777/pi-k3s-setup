@@ -11,6 +11,7 @@ admin_ssh_password="${admin_ssh_password}"
 run_type="${run_type:-help}"
 verbose="${verbose:-0}"
 interactive="${interactive:-1}"
+force_help=0
 
 die() {
   printf '%s\n' "$1" >&2
@@ -59,8 +60,7 @@ show_help() {
   instructionArray+=( "    i. sudo service ssh restart" )
   instructionArray+=( "    ii. sudo reboot now" )
   instructionArray+=( "2. Set variables" )
-  instructionArray+=( "  a. Run this utility (see 3) with the run_type variable set to run to check variable values," )
-  instructionArray+=( "    and then answer no on the prompt proceed" )
+  instructionArray+=( "  a. Validate that all of your variables have the correct value (run with -h)" )
   instructionArray+=( "  b. Some values have good defaults which will be shown at the verification string" )
   instructionArray+=( "  c. Every value must be set unless it's stated otherwise" )
   instructionArray+=( "  d. Every value can be set in the following ways" )
@@ -234,8 +234,7 @@ write_block "Starting Up"
 while :; do
   case $1 in
     -h|-\?|--help)
-      show_help    # Display a usage synopsis.
-      exit
+      force_help=1
       ;;
     -hn|--hostname)       # Takes an option argument; ensure it has been specified.
       if [ "$2" ]; then
@@ -368,9 +367,24 @@ while :; do
   shift
 done
 
-show_variables
-exit
+if [ $force_help -eq 1 ]
+then
+  run_type="help"
+fi
 
+show_variables
+
+if [ $run_type -eq "run" ]
+then
+  validate_variables
+  # check if should run
+  # run
+else
+  show_help
+  exit
+fi
+
+exit
 # * &&& Write out safe variables and verify go &&&&
 if [ ! -z "${id_rsa_pub_location}" ]
 then
@@ -380,19 +394,20 @@ fi
 echo -e "${admin_ssh_password}" | ssh-add -p "${id_rsa_pub_location}"
 scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/home/${username}/.ssh/authorized_keys
 
-ssh pi@{hostname} -praspberry
-  echo -e raspberry | sudo -S useradd -m -G sudo ${username}
-  echo -e ${password} | passwd ${username}
-  echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-  exit
+ssh pi@{hostname} -praspberry '
+  echo -e raspberry | sudo -S useradd -m -G sudo ${username};
+  echo -e ${password} | passwd ${username};
+  echo -e raspberry | sudo -S sed -i '"'"'s/#PasswordAuthentication.*/PasswordAuthentication no/'"'"' /etc/ssh/sshd_config;
+'
 
-ssh ${username}@${hostname} -i "${id_rsa_pub_location}"
+ssh ${username}@${hostname} -i "${id_rsa_pub_location}" '
   echo -e ${password} | sudo -S userdel -r pi
   echo -n " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory " >> /boot/cmdline.txt
   echo -e ${password} | sudo -S apt-get update
   echo -e ${password} | sudo -S apt-get upgrade -y
   echo -e ${password} | sudo -S apt-get autoremove -y
   sudo reboot now
+'
 
 write_block "Waiting 5 seconds for reboot..."
 sleep 5
