@@ -1,6 +1,5 @@
 #!/bin/bash
 
-delimiter="*******************************************************"
 hostname="${hostname}"
 username="${username}"
 password="${password}"
@@ -11,12 +10,8 @@ admin_ssh_password="${admin_ssh_password}"
 run_type="${run_type:-help}"
 verbose="${verbose:-0}"
 interactive="${interactive:-1}"
+delimiter="*******************************************************"
 force_help=0
-
-die() {
-  printf '%s\n' "$1" >&2
-  exit 1
-}
 
 write_block() {
   if [ $1 -le $verbose]
@@ -38,8 +33,22 @@ write_block() {
     if [ $verbose -ge 2 ]
     then
       echo "$delimiter"
-      echo ""
     fi
+    echo ""
+  fi
+}
+
+die() {
+  write_block 0 "$1"
+  printf '%s\n' "$1" >&2
+  exit 1
+}
+
+check_for_error() {
+  write_block 2 "Just ran $3"
+  if [ $1 -gt 0 ]
+  then
+    die "An error occurred during $2. Check logs for more detail."
   fi
 }
 
@@ -242,14 +251,38 @@ validate_variables() {
   fi
 }
 
+confirm_run() {
+  if [ $interactive -gt 0 ]
+  then
+    read -r -p "Are you sure? [y/N] " response
+    case "$response" in
+      [yY][eE][sS]|[yY]) 
+        write_block 2 "Confirmation accepted, continuing..."
+        ;;
+      *)
+        die "Run cancelled, exiting..."
+        ;;
+    esac
+  else
+    write_block 2 "Non-interactive skipping confirmation..."
+  fi
+}
+
 setup_pi() {
+  most_recent_command_value=0
   if [ ! -z "${id_rsa_pub_location}" ]
   then
     ssh-keygen -f /home/${admin_username}/.ssh/id_rsa -N "${admin_ssh_password}"
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "pi setup" "ssh-keygen"
     id_rsa_pub_location="/home/${admin_username}/.ssh/id_rsa.pub"
   fi
   echo -e "${admin_ssh_password}" | ssh-add -p "${id_rsa_pub_location}"
+  most_recent_command_value=$?
+  check_for_error $most_recent_command_value "pi setup" "ssh-add"
   scp ${id_rsa_pub_location}/id_rsa.pub ${admin_username}@${hostname}:/tmp/id_rsa.pub
+  most_recent_command_value=$?
+  check_for_error $most_recent_command_value "pi setup" "scp"
   
   ssh pi@{hostname} -praspberry " \
     echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
@@ -261,15 +294,31 @@ setup_pi() {
     echo -e raspberry | sudo -S chmod 755 /home/${username}/.ssh/authorized_keys; \
     echo -e raspberry | sudo -S service ssh restart; \
   "
+  most_recent_command_value=$?
+  check_for_error $most_recent_command_value "pi setup" "ssh block #1"
   
   ssh ${username}@${hostname} -i "${id_rsa_pub_location}" " \
     echo -e \"${password}\" | sudo -S userdel -r pi; \
+    case \`grep -Fx \"$FILENAME\" \"$LIST\" >/dev/null; echo \$?\` in \
+      0) \
+        echo \"/boot/cmdline.txt already updated\" \
+        ;; \
+      1) \
+        # code if not found \
+        ;; \
+      *) \
+        echo \"an error occurred, check logs for details\" \
+        exit 1 \
+        ;; \
+    esac \
     echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
     echo -e \"${password}\" | sudo -S apt-get update; \
     echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     sudo reboot now; \
   "
+  most_recent_command_value=$?
+  check_for_error $most_recent_command_value "pi setup" "ssh block #2"
   
   write_block 2 "Waiting 5 seconds for reboot..."
   sleep 5
@@ -278,15 +327,33 @@ setup_pi() {
   then
     write_block 2 "Installing k3s"
     curl -sLS https://get.k3sup.dev | sh
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "pi setup" "downloading k3sup"
     sudo install k3sup /usr/local/bin/
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "pi setup" "installing k3sup"
   fi
   
   k3sup install --host ${hostname} --user ${username} --ssh-key ${id_rsa_pub_location} --cluster
+  most_recent_command_value=$?
+  check_for_error $most_recent_command_value "pi setup" "k3sup install"
   
   if [ ! -z "${cluster_server_name}" ]
   then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key ${id_rsa_pub_location} --server
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "pi setup" "k3sup join"
   fi
+}
+
+post_run() {
+  ### After
+  
+  # * &&& mention basically done &&&&
+  # * &&& update sshd_config to not allow passwords &&&
+  # * 
+  # * &&& Write out safe variables and notify successful end &&&&
+  # * &&& Suggest that the security conscious change their secrets (password, sshkey, find others) &&&
 }
 
 # Parse Parameters
@@ -438,20 +505,10 @@ show_variables
 if [ $run_type -eq "run" ]
 then
   validate_variables
-  # check if should run
+  confirm_run
   setup_pi
+  post_run
 else
   verbose=$((verbose + 1))
   show_help
-  exit
 fi
-
-exit
-
-### After
-
-# * &&& mention basically done &&&&
-# * &&& update sshd_config to not allow passwords &&&
-# * 
-# * &&& Write out safe variables and notify successful end &&&&
-# * &&& Suggest that the security conscious change their secrets (password, sshkey, find others) &&&
