@@ -192,7 +192,7 @@ show_variables() {
   variablesArray+=( "      2: debug, all logs" )
   variablesArray+=( "" )
 
-  write_block 1 "${variablesArray[@]}"
+  write_block 0 "${variablesArray[@]}"
 }
 
 validate_variables() {
