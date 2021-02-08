@@ -514,6 +514,8 @@ if [ $run_type = "run" ]; then
   setup_pi
   post_run
 else
-  verbose=$((verbose + 1))
+  if [ $verbose -lt 1 ]; then
+    verbose=$((verbose + 1))
+  fi
   show_help
 fi
