@@ -10,7 +10,6 @@ admin_ssh_password="${admin_ssh_password}"
 run_type="${run_type:-help}"
 verbose="${verbose:-0}"
 interactive="${interactive:-1}"
-dns_server="${dns_server}"
 delimiter="*******************************************************"
 force_help=0
 
@@ -192,12 +191,6 @@ show_variables() {
   variablesArray+=( "      1: info, basic info (recommended)" )
   variablesArray+=( "      2: debug, all logs" )
   variablesArray+=( "" )
-  variablesArray+=( "dns_server=$dns_server" )
-  variablesArray+=( "  optional" )
-  variablesArray+=( "  (can't be passed by parameter)" )
-  variablesArray+=( "  desc: ip address of DNS server that can identify the target" )
-  variablesArray+=( "  note: ONLY used on docker" )
-  variablesArray+=( "" )
 
   write_block 0 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -243,8 +236,6 @@ validate_variables() {
       die 'ERROR: "$interactive" is not valid, please run with -h'
     fi
   fi
-
-  # dns_server doesn't have to be set (unless running in docker)
 }
 
 confirm_run() {
