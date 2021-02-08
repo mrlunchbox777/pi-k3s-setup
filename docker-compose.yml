@@ -13,3 +13,9 @@ services:
       - 8.8.8.8
       - 4.4.4.4
       - ${dns_server}
+    networks:
+      - pic
+
+networks:
+  pic:
+    driver: bridge

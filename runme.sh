@@ -200,6 +200,7 @@ show_variables() {
   variablesArray+=( "" )
 
   write_block 0 "${variablesArray[@]}"
+  write_block 2 "$(cat /etc/resolv.conf)"
 }
 
 validate_variables() {
