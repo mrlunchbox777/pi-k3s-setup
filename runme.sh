@@ -57,6 +57,8 @@ is_valid_username() {
 ssh_add_pass() {
   local ssh_file="$1"
   local ssh_password="$2"
+  local ssh_output=$(ssh-agent -s)
+  write_block 2 "$ssh_output"
   SSH_ASKPASS=./ssh_give_pass.sh ssh-add "$ssh_file" <<< "$ssh_password"
 }
 
@@ -265,12 +267,14 @@ setup_pi() {
   if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
     if [ -z "${admin_ssh_password}" ]; then
       write_block 2 "Creating id_rsa without password..."
-      ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N ""
+      local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "" 2>&1)
       most_recent_command_value=$?
+      write_block 2 "$keygen_output"
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen without password"
     else
-      ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}"
+      local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}" 2>&1)
       most_recent_command_value=$?
+      write_block 2 "$keygen_output"
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
     fi
   fi
