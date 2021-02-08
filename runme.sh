@@ -259,6 +259,9 @@ setup_pi() {
   if [ ! -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
   fi
+  if [ ! -f "${id_rsa_pub_location}" ]; then
+    mkdir -p "${id_rsa_pub_location}"
+  fi
   if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
     if [ -z "${admin_ssh_password}" ]; then
       write_block 2 "Creating id_rsa without password..."

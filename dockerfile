@@ -2,6 +2,6 @@ FROM bash:5
 
 CMD bash /runme.sh
 WORKDIR /
-RUN apk add bind-tools
+RUN apk add bind-tools openssh-keygen
 COPY runme.sh ssh_give_pass.sh /
 RUN chmod +x runme.sh ssh_give_pass.sh
