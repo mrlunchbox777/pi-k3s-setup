@@ -1,5 +1,6 @@
-FROM alpine:3.12
+FROM bash:5
 
-CMD runme.sh
+CMD bash /runme.sh
 WORKDIR /
 COPY runme.sh ssh_give_pass.sh /
+RUN chmod +x runme.sh ssh_give_pass.sh
