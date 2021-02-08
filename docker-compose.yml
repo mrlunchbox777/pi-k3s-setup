@@ -9,3 +9,7 @@ services:
     env_file: .env
     volumes:
       - ./.docker-data/home:/root
+    dns:
+      - 8.8.8.8
+      - 4.4.4.4
+      - ${dns_server}
