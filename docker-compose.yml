@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.7"
 
 services:
   runme:
@@ -10,5 +10,13 @@ services:
       env_file: .env
     volumes:
       - type: volume
-        source: .docker-data
+        source: homedir
         target: /root
+
+volumes:
+  homedir:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./.docker-data/home
