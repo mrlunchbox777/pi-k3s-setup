@@ -1,4 +1,8 @@
 .docker-data
-.gitignore
-README.md
+.dockerignore
 .env
+.gitignore
+docker-compose.yml
+dockerfile
+README.md
+template.env
