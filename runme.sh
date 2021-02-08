@@ -280,6 +280,7 @@ setup_target() {
   fi
 
   write_block 2 "set up use of the cert"
+  # TODO extra output here
   eval `ssh-agent -s` >> /dev/null
   write_block 2 "ssh-agent output - $ssh_output"
   if [ -z "${admin_ssh_password}" ]; then
@@ -296,8 +297,9 @@ setup_target() {
   fi
 
   write_block 2 "add fingerprint to known_hosts"
-  local sshkeyscan_output=$(ssh-keyscan -H "${hostname}" >> ~/.ssh/known_hosts)
-  write_block 2 "$sshkeyscan_output"
+  ssh-keygen -R "${hostname}"
+  # local sshkeysran_output=$(ssh-keygen -R "${hostname}")
+  # write_block 2 "$sshkeyscan_output"
 
   write_block 2 "copy the public key to the target"
   scp "${id_rsa_pub_location}id_rsa.pub" ${admin_username}@${hostname}:/tmp/id_rsa.pub
