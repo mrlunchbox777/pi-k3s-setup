@@ -62,7 +62,7 @@ ssh_add_pass() {
 
 show_help() {
   instructionArray=( "" )
-  instructionArray+=( "1. Get the pi accessible" )
+  instructionArray+=( "1. Get the target accessible" )
   instructionArray+=( "  a. Get the boot drive ready, format the drive using the following" )
   instructionArray+=( "    i. balenaEtcher - https://www.balena.io/etcher/" )
   instructionArray+=( "    ii. Rasbian Lite - https://www.raspberrypi.org/software/operating-systems/" )
@@ -121,7 +121,7 @@ show_variables() {
   variablesArray+=( "" )
   variablesArray+=( "" )
   variablesArray+=( "" )
-  variablesArray+=( "--- Pi Variables ---" )
+  variablesArray+=( "--- Target Variables ---" )
   variablesArray+=( "" )
   variablesArray+=( "" )
   variablesArray+=( "hostname=$hostname" )
@@ -254,7 +254,7 @@ confirm_run() {
   fi
 }
 
-setup_pi() {
+setup_target() {
   most_recent_command_value=0
 
   # prep the cert
@@ -270,12 +270,12 @@ setup_pi() {
       local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "")
       most_recent_command_value=$?
       write_block 2 "$keygen_output"
-      check_for_error $most_recent_command_value "pi setup" "ssh-keygen without password"
+      check_for_error $most_recent_command_value "target setup" "ssh-keygen without password"
     else
       local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}")
       most_recent_command_value=$?
       write_block 2 "$keygen_output"
-      check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
+      check_for_error $most_recent_command_value "target setup" "ssh-keygen with password"
     fi
   fi
 
@@ -286,16 +286,20 @@ setup_pi() {
     write_block 2 "Using id_rsa without password..."
     ssh-add "${id_rsa_pub_location}id_rsa"
     most_recent_command_value=$?
-    check_for_error $most_recent_command_value "pi setup" "ssh-add without password"
+    check_for_error $most_recent_command_value "target setup" "ssh-add without password"
   else
     ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}"
     most_recent_command_value=$?
-    check_for_error $most_recent_command_value "pi setup" "ssh-add with password"
+    check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
-  
+
+  # add fingerprint to known_hosts
+  ssh-keyscan -H "${hostname}" >> ~/.ssh/known_hosts
+
+  # copy the public key to the target
   scp "${id_rsa_pub_location}id_rsa.pub" ${admin_username}@${hostname}:/tmp/id_rsa.pub
   most_recent_command_value=$?
-  check_for_error $most_recent_command_value "pi setup" "scp"
+  check_for_error $most_recent_command_value "target setup" "scp"
   
   ssh pi@{hostname} -praspberry " \
     if [ ! $(id -u ${username}) ] \
@@ -311,7 +315,7 @@ setup_pi() {
     echo -e raspberry | sudo -S service ssh restart; \
   "
   most_recent_command_value=$?
-  check_for_error $most_recent_command_value "pi setup" "ssh block #1"
+  check_for_error $most_recent_command_value "target setup" "ssh block #1"
   
   ssh ${username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
     if [ $(id -u pi) ] \
@@ -336,7 +340,7 @@ setup_pi() {
     sudo reboot now; \
   "
   most_recent_command_value=$?
-  check_for_error $most_recent_command_value "pi setup" "ssh block #2"
+  check_for_error $most_recent_command_value "target setup" "ssh block #2"
   
   write_block 2 "Waiting 5 seconds for reboot..."
   sleep 5
@@ -345,20 +349,20 @@ setup_pi() {
     write_block 2 "Installing k3s"
     curl -sLS https://get.k3sup.dev | sh
     most_recent_command_value=$?
-    check_for_error $most_recent_command_value "pi setup" "downloading k3sup"
+    check_for_error $most_recent_command_value "target setup" "downloading k3sup"
     sudo install k3sup /usr/local/bin/
     most_recent_command_value=$?
-    check_for_error $most_recent_command_value "pi setup" "installing k3sup"
+    check_for_error $most_recent_command_value "target setup" "installing k3sup"
   fi
   
   k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster
   most_recent_command_value=$?
-  check_for_error $most_recent_command_value "pi setup" "k3sup install"
+  check_for_error $most_recent_command_value "target setup" "k3sup install"
   
   if [ ! -z "${cluster_server_name}" ]; then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
     most_recent_command_value=$?
-    check_for_error $most_recent_command_value "pi setup" "k3sup join"
+    check_for_error $most_recent_command_value "target setup" "k3sup join"
   fi
 }
 
@@ -368,7 +372,7 @@ post_run() {
   postRunArray=( "" )
   postRunArray+=( "Successful Run" )
   postRunArray+=( "For the security conscious consider changing the following:" )
-  postRunArray+=( "  - password on the pi" )
+  postRunArray+=( "  - password on the target" )
   postRunArray+=( "  - the password for the sshkey" )
 
   postRunArray+=( "" )
@@ -523,7 +527,7 @@ show_variables
 if [ $run_type = "run" ]; then
   validate_variables
   confirm_run
-  setup_pi
+  setup_target
   post_run
 else
   if [ $verbose -lt 1 ]; then
