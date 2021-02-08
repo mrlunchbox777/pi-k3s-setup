@@ -57,8 +57,6 @@ is_valid_username() {
 ssh_add_pass() {
   local ssh_file="$1"
   local ssh_password="$2"
-  local ssh_output=$(ssh-agent -s)
-  write_block 2 "$ssh_output"
   SSH_ASKPASS=./ssh_give_pass.sh ssh-add "$ssh_file" <<< "$ssh_password"
 }
 
@@ -258,6 +256,8 @@ confirm_run() {
 
 setup_pi() {
   most_recent_command_value=0
+
+  # prep the cert
   if [ ! -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
   fi
@@ -278,6 +278,10 @@ setup_pi() {
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
     fi
   fi
+
+  # use the cert
+  local ssh_output=$(ssh-agent -s)
+  write_block 2 "$ssh_output"
   if [ -z "${admin_ssh_password}" ]; then
     write_block 2 "Using id_rsa without password..."
     ssh-add "${id_rsa_pub_location}id_rsa"
