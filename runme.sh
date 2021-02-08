@@ -206,7 +206,7 @@ validate_variables() {
     die 'ERROR: "$username" is not a valid username, please run with -h'
   fi
 
-  # assume valid $password
+  write_block 2 "assume valid \$password"
 
   if [ ! -z "$cluster_server_name" ]; then
     host "$cluster_server_name" 2>&1 > /dev/null
@@ -215,13 +215,13 @@ validate_variables() {
     fi
   fi
 
-  # assume valid $id_rsa_pub_location
+  write_block 2 "assume valid \$id_rsa_pub_location"
 
   if ! is_valid_username "$admin_username"; then
     die 'ERROR: "$admin_username" is not a valid username, please run with -h'
   fi
 
-  # assume valid $admin_ssh_password
+  write_block 2 "assume valid \$admin_ssh_password"
 
   if [[ ! "$run_type" =~ ^(help|run)$ ]]; then
     die 'ERROR: "$run_type" is not valid, please run with -h'
@@ -257,7 +257,7 @@ confirm_run() {
 setup_target() {
   most_recent_command_value=0
 
-  # prep the cert
+  write_block 2 "prep the cert"
   if [ ! -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
   fi
@@ -279,7 +279,7 @@ setup_target() {
     fi
   fi
 
-  # use the cert
+  write_block 2 "use the cert"
   eval `ssh-agent -s` >> /dev/null
   write_block 2 "$ssh_output"
   if [ -z "${admin_ssh_password}" ]; then
@@ -293,10 +293,10 @@ setup_target() {
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
 
-  # add fingerprint to known_hosts
+  write_block 2 "add fingerprint to known_hosts"
   ssh-keyscan -H "${hostname}" >> ~/.ssh/known_hosts
 
-  # copy the public key to the target
+  write_block 2 "copy the public key to the target"
   scp "${id_rsa_pub_location}id_rsa.pub" ${admin_username}@${hostname}:/tmp/id_rsa.pub
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "scp"
@@ -379,7 +379,7 @@ post_run() {
   write_block 1 "${postRunArray[@]}"
 }
 
-# Parse Parameters
+write_block 2 "parse parameters"
 while :; do
   case $1 in
     -h|-\?|--help)
