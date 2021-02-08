@@ -202,14 +202,14 @@ validate_variables() {
     die 'ERROR: "$hostname" is not a valid hostname, please run with -h'
   fi
 
-  if [ ! is_valid_username "$username" ]; then
+  if ! is_valid_username "$username"; then
     die 'ERROR: "$username" is not a valid username, please run with -h'
   fi
 
   # assume valid $password
 
   if [ ! -z "$cluster_server_name" ]; then
-    host "$cluster_server_name" 2>&s > /dev/null
+    host "$cluster_server_name" 2>&1 > /dev/null
     if [ ! $? -eq 0 ]; then
       die 'ERROR: "$cluster_server_name" is not a valid hostname, please run with -h'
     fi
@@ -217,7 +217,7 @@ validate_variables() {
 
   # assume valid $id_rsa_pub_location
 
-  if [ ! is_valid_username "$admin_username" ]; then
+  if ! is_valid_username "$admin_username"; then
     die 'ERROR: "$admin_username" is not a valid username, please run with -h'
   fi
 
