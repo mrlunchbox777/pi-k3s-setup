@@ -9,13 +9,14 @@ services:
     env_file: .env
     volumes:
       - ./.docker-data/home:/root
-    dns:
-      - 8.8.8.8
-      - 4.4.4.4
-      - ${dns_server}
-    networks:
-      - pic
+    network_mode: host
+    # dns:
+    #   - 8.8.8.8
+    #   - 4.4.4.4
+    #   - ${dns_server}
+    # networks:
+    #   - pic
 
-networks:
-  pic:
-    driver: bridge
+# networks:
+#   pic:
+#     driver: bridge

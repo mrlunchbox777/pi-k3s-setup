@@ -200,11 +200,11 @@ show_variables() {
   variablesArray+=( "" )
 
   write_block 0 "${variablesArray[@]}"
-  write_block 2 "$(cat /etc/resolv.conf)"
+  write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
 }
 
 validate_variables() {
-  host "$hostname" 2>&s > /dev/null
+  host "$hostname" 2>&1 > /dev/null
   if [ ! $? -eq 0 ]; then
     die 'ERROR: "$hostname" is not a valid hostname, please run with -h'
   fi
