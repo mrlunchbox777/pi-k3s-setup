@@ -280,7 +280,7 @@ setup_pi() {
   fi
 
   # use the cert
-  local ssh_output=$(ssh-agent -s)
+  eval `ssh-agent -s` >> /dev/null
   write_block 2 "$ssh_output"
   if [ -z "${admin_ssh_password}" ]; then
     write_block 2 "Using id_rsa without password..."
