@@ -279,17 +279,19 @@ setup_target() {
     fi
   fi
 
-  write_block 2 "use the cert"
+  write_block 2 "set up use of the cert"
   eval `ssh-agent -s` >> /dev/null
-  write_block 2 "$ssh_output"
+  write_block 2 "ssh-agent output - $ssh_output"
   if [ -z "${admin_ssh_password}" ]; then
     write_block 2 "Using id_rsa without password..."
-    ssh-add "${id_rsa_pub_location}id_rsa"
+    local sshadd_output=$(ssh-add "${id_rsa_pub_location}id_rsa")
     most_recent_command_value=$?
+    write_block 2 "$sshadd_output"
     check_for_error $most_recent_command_value "target setup" "ssh-add without password"
   else
-    ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}"
+    local sshadd_output=$(ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}")
     most_recent_command_value=$?
+    write_block 2 "$sshadd_output"
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
 
