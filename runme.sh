@@ -286,17 +286,18 @@ setup_target() {
     write_block 2 "Using id_rsa without password..."
     local sshadd_output=$(ssh-add "${id_rsa_pub_location}id_rsa")
     most_recent_command_value=$?
-    write_block 2 "$sshadd_output"
+    write_block 2 "ssh-add output - $sshadd_output"
     check_for_error $most_recent_command_value "target setup" "ssh-add without password"
   else
     local sshadd_output=$(ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}")
     most_recent_command_value=$?
-    write_block 2 "$sshadd_output"
+    write_block 2 "ssh-add output - $sshadd_output"
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
 
   write_block 2 "add fingerprint to known_hosts"
-  ssh-keyscan -H "${hostname}" >> ~/.ssh/known_hosts
+  local sshkeyscan_output=$(ssh-keyscan -H "${hostname}" >> ~/.ssh/known_hosts)
+  write_block 2 "$sshkeyscan_output"
 
   write_block 2 "copy the public key to the target"
   scp "${id_rsa_pub_location}id_rsa.pub" ${admin_username}@${hostname}:/tmp/id_rsa.pub
