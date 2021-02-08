@@ -223,7 +223,7 @@ validate_variables() {
 
   # assume valid $admin_ssh_password
 
-  if [[ ! "$run_type" =~ ^[help|run]$ ]]; then
+  if [[ ! "$run_type" =~ ^(help|run)$ ]]; then
     die 'ERROR: "$run_type" is not valid, please run with -h'
   fi
 
