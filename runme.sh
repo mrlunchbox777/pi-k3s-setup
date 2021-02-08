@@ -267,12 +267,12 @@ setup_pi() {
   if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
     if [ -z "${admin_ssh_password}" ]; then
       write_block 2 "Creating id_rsa without password..."
-      local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "" 2>&1)
+      local keygen_output=$(((ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "") 1>log) 2>&1)
       most_recent_command_value=$?
       write_block 2 "$keygen_output"
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen without password"
     else
-      local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}" 2>&1)
+      local keygen_output=$(((ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}") 1>log) 2>&1)
       most_recent_command_value=$?
       write_block 2 "$keygen_output"
       check_for_error $most_recent_command_value "pi setup" "ssh-keygen with password"
