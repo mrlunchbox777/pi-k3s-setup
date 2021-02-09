@@ -285,25 +285,12 @@ setup_target() {
     fi
   fi
 
-  write_block 2 "set up use of the cert"
-  # TODO extra output here
-  eval `ssh-agent -s` >> /dev/null
-  write_block 2 "ssh-agent output - $ssh_output"
-  if [ -z "${admin_ssh_password}" ]; then
-    write_block 2 "Using id_rsa without password..."
-    local sshadd_output=$(ssh-add "${id_rsa_pub_location}id_rsa")
-    most_recent_command_value=$?
-    write_block 2 "ssh-add output - $sshadd_output"
-    check_for_error $most_recent_command_value "target setup" "ssh-add without password"
-  else
-    local sshadd_output=$(ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}")
-    most_recent_command_value=$?
-    write_block 2 "ssh-add output - $sshadd_output"
-    check_for_error $most_recent_command_value "target setup" "ssh-add with password"
-  fi
+  write_block 2 "moving the keys out for password auth"
+  mv "${id_rsa_pub_location}id_rsa.pub" "${id_rsa_pub_location}id_rsa.tmp.pub"
+  mv "${id_rsa_pub_location}id_rsa" "${id_rsa_pub_location}id_rsa.tmp"
 
   write_block 2 "copy the public key to the target"
-  local scp_output=$(sshpass -p raspberry scp "${id_rsa_pub_location}id_rsa.pub" pi@${hostname}:/tmp/id_rsa.pub)
+  local scp_output=$(sshpass -p raspberry scp "${id_rsa_pub_location}id_rsa.tmp.pub" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
@@ -323,6 +310,27 @@ setup_target() {
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #1"
+
+  write_block 2 "moving the keys out for password auth"
+  mv "${id_rsa_pub_location}id_rsa.tmp.pub" "${id_rsa_pub_location}id_rsa.pub"
+  mv "${id_rsa_pub_location}id_rsa.tmp" "${id_rsa_pub_location}id_rsa"
+
+  write_block 2 "set up use of the cert"
+  # TODO extra output here
+  eval `ssh-agent -s` >> /dev/null
+  write_block 2 "ssh-agent output - $ssh_output"
+  if [ -z "${admin_ssh_password}" ]; then
+    write_block 2 "Using id_rsa without password..."
+    local sshadd_output=$(ssh-add "${id_rsa_pub_location}id_rsa")
+    most_recent_command_value=$?
+    write_block 2 "ssh-add output - $sshadd_output"
+    check_for_error $most_recent_command_value "target setup" "ssh-add without password"
+  else
+    local sshadd_output=$(ssh_add_pass "${id_rsa_pub_location}id_rsa" "${admin_ssh_password}")
+    most_recent_command_value=$?
+    write_block 2 "ssh-add output - $sshadd_output"
+    check_for_error $most_recent_command_value "target setup" "ssh-add with password"
+  fi
 
   ssh ${username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
     if [ $(id -u pi) ] \
