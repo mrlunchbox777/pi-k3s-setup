@@ -348,10 +348,10 @@ setup_target() {
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
-  
+
   write_block 2 "Waiting 5 seconds for reboot..."
   sleep 5
-  
+
   if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3s"
     curl -sLS https://get.k3sup.dev | sh
@@ -361,11 +361,11 @@ setup_target() {
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "target setup" "installing k3sup"
   fi
-  
+
   k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "k3sup install"
-  
+
   if [ ! -z "${cluster_server_name}" ]; then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
     most_recent_command_value=$?
