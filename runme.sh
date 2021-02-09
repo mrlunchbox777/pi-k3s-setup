@@ -303,11 +303,12 @@ setup_target() {
   fi
 
   write_block 2 "copy the public key to the target"
-  scp "${id_rsa_pub_location}id_rsa.pub" -o "StrictHostKeyChecking=no" ${admin_username}@${hostname}:/tmp/id_rsa.pub
+  local scp_output=$(sshpass -p raspberry scp "${id_rsa_pub_location}id_rsa.pub" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
+  write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
 
-  ssh -o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" pi@${hostname} -praspberry " \
+  sshpass -p raspberry ssh pi@${hostname} " \
     if [ ! $(id -u ${username}) ] \
     then \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
@@ -323,7 +324,7 @@ setup_target() {
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #1"
 
-  ssh $-o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" {username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
+  ssh ${username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
     if [ $(id -u pi) ] \
     then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
