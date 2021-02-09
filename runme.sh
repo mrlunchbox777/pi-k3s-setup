@@ -297,7 +297,9 @@ setup_target() {
   fi
 
   write_block 2 "add fingerprint to known_hosts"
-  ssh-keygen -R "${hostname}"
+  local sshkeysran_output=$(ssh-keyscan -t rsa,dsa "${hostname}" 2>/dev/null)
+  echo "$sshkeysran_output" >> "${id_rsa_pub_location}known_hosts"
+  # ssh-keygen -R "${hostname}"
   # local sshkeysran_output=$(ssh-keygen -R "${hostname}")
   # write_block 2 "$sshkeyscan_output"
 
