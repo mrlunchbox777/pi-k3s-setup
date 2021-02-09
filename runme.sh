@@ -257,8 +257,12 @@ confirm_run() {
 setup_target() {
   most_recent_command_value=0
 
+  if [ -f "/tmp/known_hosts" ]; then
+    rm /tmp/known_hosts
+  fi
+
   write_block 2 "add fingerprint to known_hosts"
-  local host_fingerprint_output=$(sshpass -p raspberry ssh -o "ConnectTimeout 3" -o "StrictHostKeyChecking=accept-new" pi@${hostname} "echo got fingerprint")
+  local host_fingerprint_output=$(sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" pi@${hostname} "echo got fingerprint")
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
@@ -290,12 +294,12 @@ setup_target() {
   mv "${id_rsa_pub_location}id_rsa" "${id_rsa_pub_location}id_rsa.tmp"
 
   write_block 2 "copy the public key to the target"
-  local scp_output=$(sshpass -p raspberry scp "${id_rsa_pub_location}id_rsa.tmp.pub" pi@${hostname}:/tmp/id_rsa.pub)
+  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" "${id_rsa_pub_location}id_rsa.tmp.pub" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
 
-  sshpass -p raspberry ssh pi@${hostname} " \
+  sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
     if [ ! $(id -u ${username}) ] \
     then \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
@@ -332,7 +336,7 @@ setup_target() {
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
 
-  ssh ${username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
+  ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     if [ $(id -u pi) ] \
     then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
