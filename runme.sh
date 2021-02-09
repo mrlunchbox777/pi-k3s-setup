@@ -257,6 +257,12 @@ confirm_run() {
 setup_target() {
   most_recent_command_value=0
 
+  write_block 2 "add fingerprint to known_hosts"
+  local host_fingerprint_output=$(sshpass -p raspberry ssh -o "ConnectTimeout 3" -o "StrictHostKeyChecking=accept-new" pi@${hostname} "echo got fingerprint")
+  most_recent_command_value=$?
+  write_block 2 "$host_fingerprint_output"
+  check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
+
   write_block 2 "prep the cert"
   if [ ! -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
@@ -296,15 +302,12 @@ setup_target() {
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
 
-  write_block 2 "add fingerprint to known_hosts"
-
-
   write_block 2 "copy the public key to the target"
-  scp "${id_rsa_pub_location}id_rsa.pub" -o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" ${admin_username}@${hostname}:/tmp/id_rsa.pub
+  scp "${id_rsa_pub_location}id_rsa.pub" -o "StrictHostKeyChecking=no" ${admin_username}@${hostname}:/tmp/id_rsa.pub
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "scp"
 
-  ssh -o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" pi@{hostname} -praspberry " \
+  ssh -o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" pi@${hostname} -praspberry " \
     if [ ! $(id -u ${username}) ] \
     then \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
