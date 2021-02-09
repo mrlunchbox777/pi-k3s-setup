@@ -262,6 +262,7 @@ setup_target() {
   fi
 
   write_block 2 "add fingerprint to known_hosts"
+  # TODO extra output here
   local host_fingerprint_output=$(sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" pi@${hostname} "echo got fingerprint")
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
@@ -294,13 +295,15 @@ setup_target() {
   mv "${id_rsa_pub_location}id_rsa" "${id_rsa_pub_location}id_rsa.tmp"
 
   write_block 2 "copy the public key to the target"
+  # TODO extra output here
   local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" "${id_rsa_pub_location}id_rsa.tmp.pub" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
 
   sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
-    if [ ! id -u ${username} ]; then \
+    user=$(cat /etc/passwd | egrep -e ansible | awk -F \":\" '{ print $1}'))
+    if [[ \"\$user\" != \"${username}\" ]]; then \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
       && echo -e \"${password}\" | passwd ${username}; \
     fi; \
