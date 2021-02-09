@@ -297,18 +297,14 @@ setup_target() {
   fi
 
   write_block 2 "add fingerprint to known_hosts"
-  local sshkeysran_output=$(ssh-keyscan -t rsa,dsa "${hostname}" 2>/dev/null)
-  echo "$sshkeysran_output" >> "${id_rsa_pub_location}known_hosts"
-  # ssh-keygen -R "${hostname}"
-  # local sshkeysran_output=$(ssh-keygen -R "${hostname}")
-  # write_block 2 "$sshkeyscan_output"
+
 
   write_block 2 "copy the public key to the target"
-  scp "${id_rsa_pub_location}id_rsa.pub" ${admin_username}@${hostname}:/tmp/id_rsa.pub
+  scp "${id_rsa_pub_location}id_rsa.pub" -o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" ${admin_username}@${hostname}:/tmp/id_rsa.pub
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "scp"
-  
-  ssh pi@{hostname} -praspberry " \
+
+  ssh -o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" pi@{hostname} -praspberry " \
     if [ ! $(id -u ${username}) ] \
     then \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
@@ -323,8 +319,8 @@ setup_target() {
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #1"
-  
-  ssh ${username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
+
+  ssh $-o "ConnectTimeout 3" -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" {username}@${hostname} -i "${id_rsa_pub_location}id_rsa" " \
     if [ $(id -u pi) ] \
     then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
