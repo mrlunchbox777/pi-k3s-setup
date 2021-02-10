@@ -302,10 +302,12 @@ setup_target() {
   check_for_error $most_recent_command_value "target setup" "scp"
 
   sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
-    user=$(cat /etc/passwd | egrep -e ansible | awk -F \":\" '{ print $1}'))
+    user=$(cat /etc/passwd | egrep -e ansible | awk -F \":\" '{ print $1}'); \
     if [[ \"\$user\" != \"${username}\" ]]; then \
+      echo -e raspberry | sudo -S sh -c \" \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
-      && echo -e \"${password}\" | passwd ${username}; \
+      && echo -e \"${password}\" | passwd ${username} \
+      \"; \
     fi; \
     echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     cat /tmp/id_rsa.pub >> /home/${username}/.ssh/authorized_keys; \
