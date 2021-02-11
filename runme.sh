@@ -307,8 +307,8 @@ setup_target() {
     getent passwd ${username} > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
       echo -e raspberry | sudo -S sh -c \" \
-        echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
-        && echo -e \\\"${password}\\\" | passwd ${username} \
+        echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
+        echo \\\"${password}:${username}\\\" | chpasswd; \
       \"; \
     fi; \
     echo \"put the line above here\"; \
