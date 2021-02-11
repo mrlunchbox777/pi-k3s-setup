@@ -308,7 +308,7 @@ setup_target() {
     if [ ! \$? -eq 0 ]; then \
       echo -e raspberry | sudo -S sh -c \" \
         echo -e raspberry | sudo -S useradd -m -G sudo ${username}; \
-        echo \\\"${password}:${username}\\\" | chpasswd; \
+        echo \\\"${username}:${password}\\\" | chpasswd; \
       \"; \
     fi; \
     echo \"put the line above here\"; \
