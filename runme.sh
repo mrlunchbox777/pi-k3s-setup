@@ -304,8 +304,8 @@ setup_target() {
   # echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
 
   sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
-    user=$(cat /etc/passwd | egrep -e ansible | awk -F \":\" '{ print $1}'); \
-    if [[ \"\$user\" != \"${username}\" ]]; then \
+    getent passwd ${username} > /dev/null 2&>1; \
+    if [ ! \$? -eq 0 ]; then \
       echo -e raspberry | sudo -S sh -c \" \
         echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
         && echo -e \\\"${password}\\\" | passwd ${username} \
