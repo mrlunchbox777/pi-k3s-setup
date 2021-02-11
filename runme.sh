@@ -312,11 +312,11 @@ setup_target() {
       \"; \
     fi; \
     echo \"put the line above here\"; \
-    echo -e raspberry | sudo -S mkdir -p \"/home/${username}/.ssh/\"; \
-    echo -e raspberry | sudo -S cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"; \
+    echo -e raspberry | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
+    echo -e raspberry | sudo -S -u ${username} cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"; \
     rm /tmp/id_rsa.pub; \
-    echo -e raspberry | sudo -S chown ${username}:$username /home/${username}/.ssh/authorized_keys; \
-    echo -e raspberry | sudo -S chmod 755 /home/${username}/.ssh/authorized_keys; \
+    echo -e raspberry | sudo -S -u ${username} chown ${username}:$username /home/${username}/.ssh/authorized_keys; \
+    echo -e raspberry | sudo -S -u ${username} chmod 755 /home/${username}/.ssh/authorized_keys; \
     echo -e raspberry | sudo -S service ssh restart; \
   "
   most_recent_command_value=$?
