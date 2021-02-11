@@ -300,17 +300,20 @@ setup_target() {
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
+  # this is the line to put back below
+  # echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
 
   sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
     user=$(cat /etc/passwd | egrep -e ansible | awk -F \":\" '{ print $1}'); \
     if [[ \"\$user\" != \"${username}\" ]]; then \
       echo -e raspberry | sudo -S sh -c \" \
-      echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
-      && echo -e \\\"${password}\\\" | passwd ${username} \
+        echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
+        && echo -e \\\"${password}\\\" | passwd ${username} \
       \"; \
     fi; \
-    echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
-    cat /tmp/id_rsa.pub >> /home/${username}/.ssh/authorized_keys; \
+    echo \"put the line above here\"; \
+    echo -e raspberry | sudo -S mkdir -p \"/home/${username}/.ssh/\"; \
+    echo -e raspberry | sudo -S cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"; \
     rm /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S chown ${username}:$username /home/${username}/.ssh/authorized_keys; \
     echo -e raspberry | sudo -S chmod 755 /home/${username}/.ssh/authorized_keys; \
