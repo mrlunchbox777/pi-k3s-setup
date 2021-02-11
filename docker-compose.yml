@@ -2,11 +2,11 @@ version: "3.7"
 
 services:
   runme:
-    image: pi-k3s-steup
+    image: pi-k3s-setup
     build:
       context: .
       dockerfile: dockerfile
     env_file: .env
     volumes:
-      - ./.docker-data/home:/root
+      - ./.docker-data/home:${id_rsa_pub_location:-/root/.ssh}
     network_mode: host

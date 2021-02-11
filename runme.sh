@@ -269,7 +269,7 @@ setup_target() {
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
 
   write_block 2 "prep the cert"
-  if [ ! -z "${id_rsa_pub_location}" ]; then
+  if [ -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
   fi
   if [ ! -f "${id_rsa_pub_location}" ]; then
@@ -306,7 +306,7 @@ setup_target() {
     if [[ \"\$user\" != \"${username}\" ]]; then \
       echo -e raspberry | sudo -S sh -c \" \
       echo -e raspberry | sudo -S useradd -m -G sudo ${username} \
-      && echo -e \"${password}\" | passwd ${username} \
+      && echo -e \\\"${password}\\\" | passwd ${username} \
       \"; \
     fi; \
     echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
