@@ -360,13 +360,13 @@ setup_target() {
     echo -e \"${password}\" | sudo -S apt-get update; \
     echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
-    echo -e \"${password}\" | sudo -S shutdown --reboot +1 now; \
+    echo -e \"${password}\" | sudo -S sh -c 'sleep 1 && reboot now'; \
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
 
-  write_block 2 "Waiting 5 seconds for reboot..."
-  sleep 5
+  write_block 2 "Waiting 45 seconds for reboot..."
+  sleep 45
 
   if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3s"
