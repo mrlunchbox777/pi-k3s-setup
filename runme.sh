@@ -262,7 +262,7 @@ setup_target() {
   fi
 
   write_block 2 "add fingerprint to known_hosts"
-  # TODO extra output here
+  # TODO: extra output here
   local host_fingerprint_output=$(sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" pi@${hostname} "echo got fingerprint")
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
@@ -295,7 +295,7 @@ setup_target() {
   mv "${id_rsa_pub_location}id_rsa" "${id_rsa_pub_location}id_rsa.tmp"
 
   write_block 2 "copy the public key to the target"
-  # TODO extra output here
+  # TODO: extra output here
   local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" "${id_rsa_pub_location}id_rsa.tmp.pub" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
@@ -331,7 +331,7 @@ setup_target() {
   mv "${id_rsa_pub_location}id_rsa.tmp" "${id_rsa_pub_location}id_rsa"
 
   write_block 2 "set up use of the cert"
-  # TODO extra output here
+  # TODO: extra output here
   eval `ssh-agent -s` >> /dev/null
   write_block 2 "ssh-agent output - $ssh_output"
   if [ -z "${admin_ssh_password}" ]; then
@@ -347,6 +347,7 @@ setup_target() {
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
 
+  # TODO: allow supression of the apt logs
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     getent passwd pi > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
