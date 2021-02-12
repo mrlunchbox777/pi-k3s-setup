@@ -351,23 +351,16 @@ setup_target() {
     getent passwd pi > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
-    fi \
-    case \`grep -Fx \"$FILENAME\" \"$LIST\" >/dev/null; echo \$?\` in \
-      0) \
-        echo \"/boot/cmdline.txt already updated\" \
-        ;; \
-      1) \
-        echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
-        ;; \
-      *) \
-        echo \"an error occurred, check logs for details\" \
-        exit 1 \
-        ;; \
-    esac \
+    fi; \
+    if [ \$(grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /boot/cmdline.txt) ]; then \
+      echo \"/boot/cmdline.txt already updated\" \
+    else
+      echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
+    fi; \
     echo -e \"${password}\" | sudo -S apt-get update; \
     echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
-    sudo reboot now; \
+    echo -e \"${password}\" | sudo -S shutdown --reboot +1 now; \
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
