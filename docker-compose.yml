@@ -1,5 +1,6 @@
 version: "3.7"
 
+# pulling some info from - https://github.com/k3s-io/k3s/blob/master/docker-compose.yml
 services:
   runme:
     image: pi-k3s-setup
@@ -7,6 +8,7 @@ services:
       context: .
       dockerfile: dockerfile
     env_file: .env
+    privileged: true
     volumes:
       - ./.docker-data/home:${id_rsa_pub_location:-/root/.ssh}
     network_mode: host
