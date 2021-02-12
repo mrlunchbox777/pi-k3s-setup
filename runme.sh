@@ -312,13 +312,14 @@ setup_target() {
       \"; \
     fi; \
     echo \"put the line above here\"; \
-    echo \"chown & chmod\"; \
     echo -e raspberry | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S chmod 600 /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
     echo -e raspberry | sudo -S chown ${username}:$username \"/home/${username}/.ssh/\"; \
     echo -e raspberry | sudo -S chmod 700 \"/home/${username}/.ssh/\"; \
     echo -e raspberry | sudo -S -u ${username} sh -c 'cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e raspberry | sudo -S -u ${username} sh -c 'chown ${username}:$username \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e raspberry | sudo -S -u ${username} sh -c 'chmod 600 \"/home/${username}/.ssh/authorized_keys\"'; \
     echo -e raspberry | sudo -S rm /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S service ssh restart; \
   "
