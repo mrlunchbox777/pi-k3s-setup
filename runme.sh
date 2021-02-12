@@ -348,8 +348,8 @@ setup_target() {
   fi
 
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
-    if [ $(id -u pi) ] \
-    then \
+    getent passwd pi > /dev/null 2&>1; \
+    if [ ! \$? -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
     fi \
     case \`grep -Fx \"$FILENAME\" \"$LIST\" >/dev/null; echo \$?\` in \
