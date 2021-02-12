@@ -360,10 +360,17 @@ setup_target() {
     echo -e \"${password}\" | sudo -S apt-get update; \
     echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
-    echo -e \"${password}\" | sudo -S sh -c 'sleep 1 && reboot now'; \
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
+
+  {
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+      echo -e \"${password}\" | sudo -S reboot now \
+    "
+  } || {
+    write_block 1 "rebooting target now"
+  }
 
   write_block 2 "Waiting 45 seconds for reboot..."
   sleep 45
