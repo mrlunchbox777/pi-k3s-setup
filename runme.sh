@@ -48,7 +48,7 @@ die() {
 check_for_error() {
   write_block 2 "Just ran $3"
   if [ $1 -gt 0 ]; then
-    die "An error occurred during $2. Check logs for more detail."
+    die "An error occurred during $2. Check logs for more detail. It is unknown what state the target or host is in, and will require manual validation."
   fi
 }
 
@@ -422,7 +422,7 @@ reboot() {
 }
 
 wait_for_host() {
-  write_block 2 "Waiting for reboot..."
+  write_block 2 "Waiting for host to be ready..."
   wait_for_host_ready=0
   sleep 3
   while [ $wait_for_host_ready -eq 0 ]
@@ -430,6 +430,7 @@ wait_for_host() {
     if nc -zv ${hostname} 22 2>&1 | grep -q succeeded; then 
       wait_for_host_ready=1
     fi
+    write_block 2 "Waiting for host to be ready..."
   done
 }
 
@@ -463,9 +464,11 @@ cleanup_run() {
       sudo mv /root/sudoers.bak /etc/sudoers; \
     "
   fi
+  write_block 2 "finished cleanup"
 }
 
 setup_target() {
+  wait_for_host
   update_known_hosts
   prep_the_cert
   first_command_run
@@ -473,13 +476,8 @@ setup_target() {
   second_command_run
   reboot
   install_k3sup_host
-  running_k3sup_failed=0
   wait_for_host
-  {
-    run_k3sup
-  } || {
-    running_k3sup_failed=1
-  }
+  run_k3sup
   cleanup_run
   if [ ${running_k3sup_failed} -eq 1 ]; then
     write_block 0 "running k3sup failed check logs"
