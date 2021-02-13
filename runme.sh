@@ -387,7 +387,9 @@ second_command_run() {
   # TODO: extra output here
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     echo \"put the line above here\"; \
-    if [[ ! \" \$(echo -e \\\"${password}\\\" | sudo -S cat /boot/cmdline.txt) \" =~ \"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\" ]]; then \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/cmdline.txt'); \
+    regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
+    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory ' >> /boot/cmdline.txt\"; \
     fi; \
     if [ ${skip_update} -eq 0 ]; then \
@@ -399,7 +401,9 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    if [[ ! \" \$(echo -e \\\"${password}\\\" | sudo -S cat /etc/sudoers) \" =~ \"${username} ALL=(ALL) NOPASSWD:ALL\" ]]; then \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /etc/sudoers'); \
+    regex=\"${username} ALL=(ALL) NOPASSWD:ALL\"; \
+    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /etc/sudoers.bak; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '# k3s setup no password required' >> /etc/sudoers\"; \
@@ -503,9 +507,12 @@ setup_target() {
   reboot
   install_k3sup_host
   wait_for_host
+  write_block 2 "sleeping to let cgroups init"
+  sleep 30
   run_k3sup
   cat_remote_docs "after k3sup"
   cleanup_run
+  cat_remote_docs "after cleanup"
 }
 
 post_run() {
