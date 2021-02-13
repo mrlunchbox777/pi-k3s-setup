@@ -381,7 +381,8 @@ second_command_run() {
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     getent passwd pi > /dev/null 2&>1; \
     if [ \$? -eq 0 ]; then \
-      echo -e \"${password}\" | sudo -S userdel -r pi; \
+      echo -e \"${password}\" | sudo -S killall -u pi; \
+      echo -e \"${password}\" | sudo -S userdel -f -r pi; \
     fi; \
     if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /boot/cmdline.txt) ]; then \
       echo \"/boot/cmdline.txt already updated\" \
@@ -480,6 +481,11 @@ cat_remote_docs() {
       echo \"contents of /etc/sudoers\"; \
       echo \"\"; \
       echo -e \"${password}\" | sudo -S sh -c \"cat /etc/sudoers\"; \
+      echo \"\"; \
+      echo \"\"; \
+      echo \"contents of /boot/cmdline.txt\"; \
+      echo \"\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"cat /boot/cmdline.txt\"; \
     "
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "cat remote docs" "cat remote docs"
