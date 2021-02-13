@@ -397,21 +397,23 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    echo \"running sudo stuff\"; \
     if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" ${username} ALL=(ALL) NOPASSWD:ALL \" /etc/sudoers) ]; then \
       echo \"/etc/sudoers already updated\"; \
     else \
-      echo \"updating /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /etc/sudoers.bak; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo -n '# k3s setup no password required' >> /etc/sudoers\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo -n '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
-      ${updated_sudoers=1}; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\n\\\" >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo '# k3s setup no password required' >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\n\\\" >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\n\\\" >> /etc/sudoers\"; \
     fi;
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
+  if ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" stat /etc/sudoers.bak \> /dev/null 2>\&1
+  then
+    updated_sudoers=1
+  fi
 }
 
 reboot() {
