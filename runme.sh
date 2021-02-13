@@ -399,7 +399,10 @@ second_command_run() {
     fi; \
     if [ \$(grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /etc/sudoers) ]; then \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo -n '# k3s setup no password required' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
       ${updated_sudoers=1}; \
     fi;
   "
