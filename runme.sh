@@ -457,11 +457,15 @@ run_k3sup() {
   write_block 2 "k3sup install node"
   k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster --local-path "./kubeconfig/kubeconfig"
   most_recent_command_value=$?
-  check_for_error $most_recent_command_value "target setup" "k3sup install"
+  if [ $1 -eq 1 ]; then
+    check_for_error $most_recent_command_value "target setup" "k3sup install"
+  fi
   if [ ! -z "${cluster_server_name}" ]; then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server --local-path "./kubeconfig/kubeconfig"
     most_recent_command_value=$?
-    check_for_error $most_recent_command_value "target setup" "k3sup join"
+    if [ $1 -eq 1 ]; then
+      check_for_error $most_recent_command_value "target setup" "k3sup join"
+    fi
   fi
 }
 
@@ -507,9 +511,13 @@ setup_target() {
   reboot
   install_k3sup_host
   wait_for_host
-  write_block 2 "sleeping to let cgroups init"
-  sleep 30
-  run_k3sup
+  {
+    run_k3sup 0
+  } || {
+    write_block 2 "k3sup failed on first run, sleeping and trying again"
+    sleep 30
+    run_k3sup 1
+  }
   cat_remote_docs "after k3sup"
   cleanup_run
   cat_remote_docs "after cleanup"
