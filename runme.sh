@@ -431,7 +431,7 @@ wait_for_host() {
   done
 }
 
-run_k3sup() {
+install_k3sup_host() {
   if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3sup"
     curl -sLS https://get.k3sup.dev | sh
@@ -442,7 +442,9 @@ run_k3sup() {
   k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "k3sup install"
+}
 
+run_k3sup() {
   if [ ! -z "${cluster_server_name}" ]; then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
     most_recent_command_value=$?
@@ -466,6 +468,7 @@ setup_target() {
   setup_cert_for_use
   second_command_run
   reboot
+  install_k3sup
   wait_for_host
   run_k3sup
   cleanup_run
