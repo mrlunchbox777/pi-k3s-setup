@@ -387,7 +387,7 @@ second_command_run() {
   # TODO: extra output here
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     echo \"put the line above here\"; \
-    if [ ! \$(echo -e \"${password}\" | sudo -S grep -q \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /boot/cmdline.txt) ]; then \
+    if [ ! \$(echo -e \"${password}\" | sudo -S grep -q \"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\" /boot/cmdline.txt) ]; then \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory ' >> /boot/cmdline.txt\"; \
     fi; \
     if [ ${skip_update} -eq 0 ]; then \
@@ -399,7 +399,7 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    if [ ! \$(echo -e \"${password}\" | sudo -S grep -q \" ${username} ALL=(ALL) NOPASSWD:ALL \" /etc/sudoers) ]; then \
+    if [ ! \$(echo -e \"${password}\" | sudo -S grep -q \"${username} ALL=(ALL) NOPASSWD:ALL\" /etc/sudoers) ]; then \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /etc/sudoers.bak; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '# k3s setup no password required' >> /etc/sudoers\"; \
@@ -455,7 +455,7 @@ run_k3sup() {
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "k3sup install"
   if [ ! -z "${cluster_server_name}" ]; then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server --local-path "./kubeconfig/kubeconfig"
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "target setup" "k3sup join"
   fi
@@ -516,6 +516,7 @@ post_run() {
   postRunArray+=( "For the security conscious consider changing the following:" )
   postRunArray+=( "  - password on the target" )
   postRunArray+=( "  - the password for the sshkey" )
+  postRunArray+=( "If running from docker you will find your ssh keys and kubeconfig in the .docker-data folder" )
 
   postRunArray+=( "" )
   write_block 1 "${postRunArray[@]}"
