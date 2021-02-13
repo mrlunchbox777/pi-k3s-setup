@@ -19,3 +19,4 @@
 ## Links
 
 * [Manual Install](https://blog.alexellis.io/test-drive-k3s-on-raspberry-pi/)
+* [k3sup](https://github.com/alexellis/k3sup)
