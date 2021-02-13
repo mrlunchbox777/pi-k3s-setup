@@ -15,7 +15,6 @@
 ## Improvements
 
 * allow different pi user and different password
-* allow configurable sleep time
 
 ## Links
 

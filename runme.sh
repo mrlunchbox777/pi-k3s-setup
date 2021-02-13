@@ -397,7 +397,7 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    if [ \$(grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /etc/sudoers) ]; then \
+    if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /etc/sudoers) ]; then \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '# k3s setup no password required' >> /etc/sudoers\"; \
@@ -421,8 +421,14 @@ reboot() {
 }
 
 wait_for_host() {
-  write_block 2 "Waiting 45 seconds for reboot..."
-  sleep 45
+  write_block 2 "Waiting for reboot..."
+  wait_for_host_ready=0
+  while [ $wait_for_host_ready -eq 0 ]
+  do
+    if nc -zv ${hostname} 22 2>&1 | grep -q succeeded; then 
+      wait_for_host_ready=1
+    fi
+  done
 }
 
 run_k3sup() {
