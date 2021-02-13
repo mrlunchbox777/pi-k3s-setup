@@ -453,6 +453,7 @@ setup_target() {
   reboot
   wait_for_host
   run_k3sup
+  cleanup_run
 }
 
 post_run() {
