@@ -482,10 +482,6 @@ setup_target() {
   wait_for_host
   run_k3sup
   cleanup_run
-  if [ ${running_k3sup_failed} -eq 1 ]; then
-    write_block 0 "running k3sup failed check logs"
-    exit 1
-  fi
 }
 
 post_run() {
