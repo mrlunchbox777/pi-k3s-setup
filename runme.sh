@@ -15,6 +15,7 @@ skip_upgrade="${skip_upgrade:-0}"
 skip_autoremove="${skip_autoremove:-1}"
 delimiter="*******************************************************"
 force_help=0
+updated_sudoers=0
 
 write_block() {
   if [ $1 -le $verbose ]; then
@@ -396,8 +397,11 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
-    echo -e \"${password}\" | sudo -S sh -c \"echo -n '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
+    if [ \$(grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /etc/sudoers) ]; then \
+      echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo -n '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
+      ${updated_sudoers=1}; \
+    fi;
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
@@ -438,10 +442,12 @@ run_k3sup() {
 }
 
 cleanup_run() {
-  write_block 2 "move the sudoers file back"
-  ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
-    sudo mv /root/sudoers.bak /etc/sudoers; \
-  "
+  if [ ${skip_update} -eq 1 ]; then
+    write_block 2 "move the sudoers file back"
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+      sudo mv /root/sudoers.bak /etc/sudoers; \
+    "
+  fi
 }
 
 setup_target() {
