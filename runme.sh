@@ -216,7 +216,6 @@ show_variables() {
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
-  write_block 2 "" "contents of /etc/sudoers" "" "$(cat /etc/sudoers)"
 }
 
 validate_variables() {
@@ -398,10 +397,12 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /etc/sudoers) ]; then \
-      echo \"/etc/sudoers already updated\" \
-    else
-      echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
+    echo \"running sudo stuff\"; \
+    if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" ${username} ALL=(ALL) NOPASSWD:ALL \" /etc/sudoers) ]; then \
+      echo \"/etc/sudoers already updated\"; \
+    else \
+      echo \"updating /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S cp /etc/sudoers /etc/sudoers.bak; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '# k3s setup no password required' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
@@ -464,10 +465,25 @@ cleanup_run() {
   if [ ${skip_update} -eq 1 ]; then
     write_block 2 "move the sudoers file back"
     ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
-      sudo mv /root/sudoers.bak /etc/sudoers; \
+      sudo mv /etc/sudoers.bak /etc/sudoers; \
     "
   fi
   write_block 2 "finished cleanup"
+}
+
+cat_remote_docs() {
+  if [ $verbose -ge 2 ]; then
+    if [ ! -z "$1" ]; then
+      write_block 2 "$1"
+    fi
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+      echo \"contents of /etc/sudoers\"; \
+      echo \"\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"cat /etc/sudoers\"; \
+    "
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "cat remote docs" "cat remote docs"
+  fi
 }
 
 setup_target() {
@@ -476,11 +492,14 @@ setup_target() {
   prep_the_cert
   first_command_run
   setup_cert_for_use
+  cat_remote_docs "before second command"
   second_command_run
+  cat_remote_docs "after second command"
   reboot
   install_k3sup_host
   wait_for_host
   run_k3sup
+  cat_remote_docs "after k3sup"
   cleanup_run
 }
 
