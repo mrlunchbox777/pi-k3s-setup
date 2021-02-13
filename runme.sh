@@ -275,9 +275,8 @@ confirm_run() {
   fi
 }
 
-setup_target() {
-  most_recent_command_value=0
-
+# Run commands
+update_known_hosts() {
   if [ -f "/tmp/known_hosts" ]; then
     rm /tmp/known_hosts
   fi
@@ -288,7 +287,9 @@ setup_target() {
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
+}
 
+prep_the_cert() {
   write_block 2 "prep the cert"
   if [ -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
@@ -321,6 +322,9 @@ setup_target() {
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
+}
+
+first_command_run() {
   # this is the line to put back below
   # echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
 
@@ -346,7 +350,9 @@ setup_target() {
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #1"
+}
 
+setup_cert_for_use() {
   write_block 2 "moving the keys out for password auth"
   mv "${id_rsa_pub_location}id_rsa.tmp.pub" "${id_rsa_pub_location}id_rsa.pub"
   mv "${id_rsa_pub_location}id_rsa.tmp" "${id_rsa_pub_location}id_rsa"
@@ -367,7 +373,9 @@ setup_target() {
     write_block 2 "ssh-add output - $sshadd_output"
     check_for_error $most_recent_command_value "target setup" "ssh-add with password"
   fi
+}
 
+second_command_run() {
   # TODO: allow supression of the apt logs
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     getent passwd pi > /dev/null 2&>1; \
@@ -393,7 +401,9 @@ setup_target() {
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
+}
 
+reboot() {
   {
     ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
       echo -e \"${password}\" | sudo -S reboot now \
@@ -401,10 +411,14 @@ setup_target() {
   } || {
     write_block 1 "rebooting target now"
   }
+}
 
+wait_for_host() {
   write_block 2 "Waiting 45 seconds for reboot..."
   sleep 45
+}
 
+run_k3sup() {
   if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3sup"
     curl -sLS https://get.k3sup.dev | sh
@@ -421,6 +435,24 @@ setup_target() {
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "target setup" "k3sup join"
   fi
+}
+
+cleanup_run() {
+  write_block 2 "move the sudoers file back"
+  ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+    sudo mv /root/sudoers.bak /etc/sudoers; \
+  "
+}
+
+setup_target() {
+  update_known_hosts
+  prep_the_cert
+  first_command_run
+  setup_cert_for_use
+  second_command_run
+  reboot
+  wait_for_host
+  run_k3sup
 }
 
 post_run() {
