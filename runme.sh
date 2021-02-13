@@ -401,11 +401,9 @@ second_command_run() {
       echo \"/etc/sudoers already updated\"; \
     else \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /etc/sudoers.bak; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\n\\\" >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '# k3s setup no password required' >> /etc/sudoers\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\n\\\" >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\n\\\" >> /etc/sudoers\"; \
     fi;
   "
   most_recent_command_value=$?
