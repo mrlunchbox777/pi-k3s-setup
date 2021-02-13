@@ -653,9 +653,8 @@ if [ $force_help -eq 1 ]; then
   run_type="help"
 fi
 
-show_variables
-
 if [ $run_type = "run" ]; then
+  show_variables
   validate_variables
   confirm_run
   setup_target
@@ -664,5 +663,6 @@ else
   if [ $verbose -lt 1 ]; then
     verbose=$((verbose + 1))
   fi
+  show_variables
   show_help
 fi
