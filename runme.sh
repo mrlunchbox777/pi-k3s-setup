@@ -377,7 +377,7 @@ setup_cert_for_use() {
 }
 
 second_command_run() {
-  # TODO: allow supression of the apt logs
+  # TODO: extra output here
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     getent passwd pi > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
@@ -411,7 +411,7 @@ second_command_run() {
 }
 
 reboot() {
-  # TODO: allow supression of the apt logs
+  # TODO: extra output here
   {
     ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
       echo -e \"${password}\" | sudo -S reboot now \
@@ -444,7 +444,7 @@ install_k3sup_host() {
 }
 
 run_k3sup() {
-  # TODO: allow supression of the apt logs
+  # TODO: extra output here
   write_block 2 "k3sup install node"
   k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster
   most_recent_command_value=$?
