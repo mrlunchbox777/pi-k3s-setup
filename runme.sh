@@ -379,13 +379,16 @@ setup_target() {
     else
       echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
     fi; \
-    if [ ! ${skip_update} -eq 0 ]; then \
+    if [ ${skip_update} -eq 0 ]; then \
+      echo \"running update\"
       echo -e \"${password}\" | sudo -S apt-get update; \
     fi; \
-    if [ ! ${skip_upgrade} -eq 0 ]; then \
+    if [ ${skip_upgrade} -eq 0 ]; then \
+      echo \"running upgrade\"
       echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     fi; \
-    if [ ! ${skip_autoremove} -eq 0 ]; then \
+    if [ ${skip_autoremove} -eq 0 ]; then \
+      echo \"running autoremove\"
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
     echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
