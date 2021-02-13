@@ -16,7 +16,6 @@
 
 * allow different pi user and different password
 * allow configurable sleep time
-* allow configurable update/upgrade/autoremove
 
 ## Links
 
