@@ -411,6 +411,7 @@ second_command_run() {
 }
 
 reboot() {
+  # TODO: allow supression of the apt logs
   {
     ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
       echo -e \"${password}\" | sudo -S reboot now \
@@ -423,6 +424,7 @@ reboot() {
 wait_for_host() {
   write_block 2 "Waiting for reboot..."
   wait_for_host_ready=0
+  sleep 3
   while [ $wait_for_host_ready -eq 0 ]
   do
     if nc -zv ${hostname} 22 2>&1 | grep -q succeeded; then 
@@ -432,6 +434,7 @@ wait_for_host() {
 }
 
 install_k3sup_host() {
+  write_block 2 "Installing k3sup if needed"
   if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3sup"
     curl -sLS https://get.k3sup.dev | sh
@@ -469,10 +472,19 @@ setup_target() {
   setup_cert_for_use
   second_command_run
   reboot
-  install_k3sup
+  install_k3sup_host
+  running_k3sup_failed=0
   wait_for_host
-  run_k3sup
+  {
+    run_k3sup
+  } || {
+    running_k3sup_failed=1
+  }
   cleanup_run
+  if [ ${running_k3sup_failed} -eq 1 ]; then
+    write_block 0 "running k3sup failed check logs"
+    exit 1
+  fi
 }
 
 post_run() {
