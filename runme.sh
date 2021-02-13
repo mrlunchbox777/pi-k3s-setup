@@ -214,8 +214,9 @@ show_variables() {
   variablesArray+=( "  note: autoremove=0 skip autoremove=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
 
-  write_block 0 "${variablesArray[@]}"
+  write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
+  write_block 2 "" "contents of /etc/sudoers" "" "$(cat /etc/sudoers)"
 }
 
 validate_variables() {
@@ -398,6 +399,8 @@ second_command_run() {
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
     if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /etc/sudoers) ]; then \
+      echo \"/etc/sudoers already updated\" \
+    else
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo -n '# k3s setup no password required' >> /etc/sudoers\"; \
