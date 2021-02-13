@@ -10,6 +10,9 @@ admin_ssh_password="${admin_ssh_password}"
 run_type="${run_type:-help}"
 verbose="${verbose:-0}"
 interactive="${interactive:-1}"
+skip_update="${skip_update:-0}"
+skip_upgrade="${skip_upgrade:-0}"
+skip_autoremove="${skip_autoremove:-1}"
 delimiter="*******************************************************"
 force_help=0
 
@@ -179,7 +182,7 @@ show_variables() {
   variablesArray+=( "  optional" )
   variablesArray+=( "  -y/--interactive" )
   variablesArray+=( "  desc: flag, allow user interaction, should always be false running on docker" )
-  variablesArray+=( "  note: non-interactive=0 interactive=1" )
+  variablesArray+=( "  note: non-interactive=0 interactive=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
   variablesArray+=( "verbose=$verbose" )
   variablesArray+=( "  optional" )
@@ -190,6 +193,24 @@ show_variables() {
   variablesArray+=( "      0: minimal, only what needs to be shown and errors" )
   variablesArray+=( "      1: info, basic info (recommended)" )
   variablesArray+=( "      2: debug, all logs" )
+  variablesArray+=( "" )
+  variablesArray+=( "skip_update=$skip_update" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -ud/--skip_update" )
+  variablesArray+=( "  desc: flag, skip apt-get update" )
+  variablesArray+=( "  note: update=0 skip update=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
+  variablesArray+=( "skip_upgrade=$skip_upgrade" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -ug/--skip_upgrade" )
+  variablesArray+=( "  desc: flag, skip apt-get upgrade" )
+  variablesArray+=( "  note: upgrade=0 skip upgrade=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
+  variablesArray+=( "skip_autoremove=$skip_autoremove" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -ar/--skip_autoremove" )
+  variablesArray+=( "  desc: flag, skip apt-get autoremove" )
+  variablesArray+=( "  note: autoremove=0 skip autoremove=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
 
   write_block 0 "${variablesArray[@]}"
@@ -358,11 +379,17 @@ setup_target() {
     else
       echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
     fi; \
-    echo -e \"${password}\" | sudo -S apt-get update; \
-    echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
-    echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
+    if [ ! ${skip_update} -eq 0 ]; then \
+      echo -e \"${password}\" | sudo -S apt-get update; \
+    fi; \
+    if [ ! ${skip_upgrade} -eq 0 ]; then \
+      echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
+    fi; \
+    if [ ! ${skip_autoremove} -eq 0 ]; then \
+      echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
+    fi; \
     echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
-    echo -n \"${username} ALL=(ALL) NOPASSWD:ALL\" >> /etc/sudoers; \
+    echo -e \"${password}\" | sudo -S sh -c \"echo -n '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
@@ -532,6 +559,15 @@ while :; do
       ;;
     -v|--verbose)
       verbose=$((verbose + 1))  # Each -v adds 1 to verbosity.
+      ;;
+    -ud|--skip_update)       # Takes an option argument; ensure it has been specified.
+        skip_update=1
+      ;;
+    -ug|--skip_upgrade)       # Takes an option argument; ensure it has been specified.
+        skip_upgrade=1
+      ;;
+    -ar|--skip_autoremove)       # Takes an option argument; ensure it has been specified.
+        skip_autoremove=1
       ;;
     --)              # End of all options.
       shift
