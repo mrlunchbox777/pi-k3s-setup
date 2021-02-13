@@ -380,13 +380,13 @@ second_command_run() {
   # TODO: extra output here
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
     getent passwd pi > /dev/null 2&>1; \
-    if [ ! \$? -eq 0 ]; then \
+    if [ \$? -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S userdel -r pi; \
     fi; \
-    if [ \$(grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /boot/cmdline.txt) ]; then \
+    if [ \$(echo -e \"${password}\" | sudo -S grep -Fxq \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" /boot/cmdline.txt) ]; then \
       echo \"/boot/cmdline.txt already updated\" \
     else
-      echo -n \" cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory \" >> /boot/cmdline.txt; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo -n ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory ' >> /boot/cmdline.txt\"; \
     fi; \
     if [ ${skip_update} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get update; \
