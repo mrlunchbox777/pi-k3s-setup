@@ -376,19 +376,11 @@ setup_target() {
   write_block 2 "Waiting 45 seconds for reboot..."
   sleep 45
 
-  if [ ! -z /usr/local/bin/k3sup ]; then
+  if [ -z /usr/local/bin/k3sup ]; then
     write_block 2 "Installing k3sup"
     curl -sLS https://get.k3sup.dev | sh
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "target setup" "downloading k3sup"
-    # echo "installing k3sup"
-    # if [ -z /usr/bin/sudo ]; then
-    #   sudo install k3sup /usr/local/bin/
-    # else
-    #   install k3sup /usr/local/bin/
-    # fi
-    # most_recent_command_value=$?
-    # check_for_error $most_recent_command_value "target setup" "installing k3sup"
   fi
   write_block 2 "k3sup install node"
   k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster
