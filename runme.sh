@@ -327,9 +327,6 @@ prep_the_cert() {
 }
 
 first_command_run() {
-  # TODO: this is the line to put back below
-  # echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
-
   sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
     getent passwd ${username} > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
@@ -338,7 +335,7 @@ first_command_run() {
         echo \\\"${username}:${password}\\\" | chpasswd; \
       \"; \
     fi; \
-    echo \"put the line above here\"; \
+    echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     echo -e raspberry | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S chmod 600 /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
@@ -378,16 +375,13 @@ setup_cert_for_use() {
 }
 
 second_command_run() {
-  # TODO: this is the line to put back below
-    # getent passwd pi > /dev/null 2&>1; \
-    # if [ \$? -eq 0 ]; then \
-    #   echo -e \"${password}\" | sudo -S killall -u pi; \
-    #   echo -e \"${password}\" | sudo -S userdel -f -r pi; \
-    # fi; \
-
   # TODO: extra output here
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
-    echo \"put the line above here\"; \
+    getent passwd pi > /dev/null 2&>1; \
+    if [ \$? -eq 0 ]; then \
+      echo -e \"${password}\" | sudo -S killall -u pi; \
+      echo -e \"${password}\" | sudo -S userdel -f -r pi; \
+    fi; \
     filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/cmdline.txt'); \
     regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
     if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
