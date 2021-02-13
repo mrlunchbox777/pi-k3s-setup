@@ -361,6 +361,8 @@ setup_target() {
     echo -e \"${password}\" | sudo -S apt-get update; \
     echo -e \"${password}\" | sudo -S apt-get upgrade -y; \
     echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
+    echo -e \"${password}\" | sudo -S cp /etc/sudoers /root/sudoers.bak; \
+    echo -n \"${username} ALL=(ALL) NOPASSWD:ALL\" >> /etc/sudoers; \
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"

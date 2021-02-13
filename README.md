@@ -12,8 +12,12 @@
 * `./runme.sh --hostname="" --username="" --password="" --cluster_server_ip="" --id_rsa_pub_location="" --admin_username="" --admin_ssh_password="" --run_type=""`
 * `./runme.sh -hn "" -u "" -p "" -c "" -i "" -a "" -s "" -r ""`
 
-### Improvements
+## Improvements
 
 * allow different pi user and different password
 * allow configurable sleep time
 * allow configurable update/upgrade/autoremove
+
+## Links
+
+* [Manual Install](https://blog.alexellis.io/test-drive-k3s-on-raspberry-pi/)
