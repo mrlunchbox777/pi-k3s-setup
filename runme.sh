@@ -468,12 +468,12 @@ run_k3sup() {
 }
 
 cleanup_run() {
-  if [ ${skip_update} -eq 1 ]; then
-    write_block 2 "move the sudoers file back"
-    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
-      sudo mv /etc/sudoers.bak /etc/sudoers; \
-    "
-  fi
+  # if [ ${skip_update} -eq 1 ]; then
+  #   write_block 2 "move the sudoers file back"
+  #   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+  #     sudo mv /etc/sudoers.bak /etc/sudoers; \
+  #   "
+  # fi
   write_block 2 "finished cleanup"
 }
 
