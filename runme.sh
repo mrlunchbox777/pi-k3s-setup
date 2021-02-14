@@ -13,6 +13,12 @@ interactive="${interactive:-1}"
 skip_update="${skip_update:-0}"
 skip_upgrade="${skip_upgrade:-0}"
 skip_autoremove="${skip_autoremove:-0}"
+myserver_country="${myserver_country:-'US'}"
+myserver_state="${myserver_state:-'UT'}"
+myserver_location="${myserver_location:-'SLC'}"
+myserver_organizational_unit="${myserver_organizational_unit:-'IT'}"
+myserver_fully_qualified_domain_name="${myserver_fully_qualified_domain_name:-'k3s.local'}"
+myserver_organization_name="${myserver_organization_name:-'k3s'}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -213,6 +219,36 @@ show_variables() {
   variablesArray+=( "  desc: flag, skip apt-get autoremove" )
   variablesArray+=( "  note: autoremove=0 skip autoremove=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
+  variablesArray+=( "myserver_country=$myserver_country" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -msc/--myserver_country" )
+  variablesArray+=( "  desc: string for myserver.cnf, country, 2 or 3 letters, default US" )
+  variablesArray+=( "" )
+  variablesArray+=( "myserver_state=$myserver_state" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -mss/--myserver_state" )
+  variablesArray+=( "  desc: string for myserver.cnf, state, 2 or 3 letters, default UT" )
+  variablesArray+=( "" )
+  variablesArray+=( "myserver_location=$myserver_location" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -msl/--myserver_location" )
+  variablesArray+=( "  desc: string for myserver.cnf, location, any amount of letters, default SLC" )
+  variablesArray+=( "" )
+  variablesArray+=( "myserver_organizational_unit=$myserver_organizational_unit" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -msou/--myserver_organizational_unit" )
+  variablesArray+=( "  desc: string for myserver.cnf, organizational unit, any amount of letters, default IT" )
+  variablesArray+=( "" )
+  variablesArray+=( "myserver_fully_qualified_domain_name=$myserver_fully_qualified_domain_name" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -msfqdn/--myserver_fully_qualified_domain_name" )
+  variablesArray+=( "  desc: string for myserver.cnf, fully qualified domain name, [a-zA-Z0-9._-]+ , default k3s.local" )
+  variablesArray+=( "" )
+  variablesArray+=( "myserver_organization_name=$myserver_organization_name" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -mson/--myserver_organization_name" )
+  variablesArray+=( "  desc: string for myserver.cnf, organization name, any amount of letters, default k3s" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -254,9 +290,45 @@ validate_variables() {
   fi
 
   if [ ! -z "$interactive" ]; then
-    if [[ ! "$interactive" =~ ^[0-1]+$ ]]; then
+    if [[ ! "$interactive" =~ ^[0-1]$ ]]; then
       die 'ERROR: "$interactive" is not valid, please run with -h'
     fi
+  fi
+
+  if [[ ! "$skip_update" =~ ^[0-1]$ ]]; then
+    die 'ERROR: "$skip_update" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$skip_upgrade" =~ ^[0-1]$ ]]; then
+    die 'ERROR: "$skip_upgrade" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$skip_autoremove" =~ ^[0-1]$ ]]; then
+    die 'ERROR: "$skip_autoremove" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$myserver_country" =~ ^[a-zA-z]{2,3}$ ]]; then
+    die 'ERROR: "$myserver_country" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$myserver_state" =~ ^[a-zA-z]{2,3}$ ]]; then
+    die 'ERROR: "$myserver_state" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$myserver_location" =~ ^[a-zA-z]+$ ]]; then
+    die 'ERROR: "$myserver_location" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$myserver_organizational_unit" =~ ^[a-zA-z]+$ ]]; then
+    die 'ERROR: "$myserver_organizational_unit" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$myserver_fully_qualified_domain_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    die 'ERROR: "$myserver_fully_qualified_domain_name" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$myserver_organization_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    die 'ERROR: "$myserver_organization_name" is not valid, please run with -h'
   fi
 }
 
@@ -288,6 +360,52 @@ update_known_hosts() {
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
+}
+
+create_myserver_cnf() {
+  echo "# OpenSSL configuration file for creating a CSR for a server certificate" >> myserver.cnf
+  echo "# Adapt at least the FQDN and ORGNAME lines, and then run" >> myserver.cnf 
+  echo "# openssl req -new -config myserver.cnf -keyout myserver.key -out myserver.csr" >> myserver.cnf
+  echo "# on the command line." >> myserver.cnf
+  echo "" >> myserver.cnf
+
+  echo "# the fully qualified server (or service) name" >> myserver.cnf
+  echo "FQDN = $myserver_fully_qualified_domain_name" >> myserver.cnf
+  echo "" >> myserver.cnf
+
+  echo "# the name of your organization" >> myserver.cnf
+  echo "# (see also https://www.switch.ch/pki/participants/)" >> myserver.cnf
+  echo "ORGNAME = $myserver_organization_name" >> myserver.cnf
+  echo "" >> myserver.cnf
+  
+  echo "# subjectAltName entries: to add DNS aliases to the CSR, delete" >> myserver.cnf
+  echo "# the '#' character in the ALTNAMES line, and change the subsequent" >> myserver.cnf
+  echo "# 'DNS:' entries accordingly. Please note: all DNS names must" >> myserver.cnf
+  echo "# resolve to the same IP address as the FQDN." >> myserver.cnf
+  echo "ALTNAMES = DNS:\$FQDN   # , DNS:bar.example.org , DNS:www.foo.example.org" >> myserver.cnf
+  echo "" >> myserver.cnf
+
+  echo "[ req ]" >> myserver.cnf
+  echo "default_bits = 2048" >> myserver.cnf
+  echo "default_md = sha256" >> myserver.cnf
+  echo "prompt = no" >> myserver.cnf
+  echo "encrypt_key = yes" >> myserver.cnf
+  echo "distinguished_name = dn" >> myserver.cnf
+  echo "req_extensions = req_ext" >> myserver.cnf
+  echo "" >> myserver.cnf
+
+  echo "[ dn ]" >> myserver.cnf
+  echo "C = $myserver_country" >> myserver.cnf
+  echo "ST = $myserver_state" >> myserver.cnf
+  echo "L = $myserver_location" >> myserver.cnf
+  echo "O = \$ORGNAME" >> myserver.cnf
+  echo "CN = \$FQDN" >> myserver.cnf
+  echo "OU = $myserver_organizational_unit" >> myserver.cnf
+  echo "" >> myserver.cnf
+
+  echo "[ req_ext ]" >> myserver.cnf
+  echo "subjectAltName = \$ALTNAMES" >> myserver.cnf
+  echo "" >> myserver.cnf
 }
 
 # displayname=$certdisplayname # Friendly name for the cer
@@ -679,6 +797,90 @@ while :; do
       ;;
     -ar|--skip_autoremove)       # Takes an option argument; ensure it has been specified.
         skip_autoremove=1
+      ;;
+    -msc|--myserver_country)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        myserver_country=$2
+        shift
+      else
+        die 'ERROR: "--myserver_country" requires a non-empty option argument.'
+      fi
+      ;;
+    --myserver_country=?*)
+      myserver_country=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --myserver_country=)         # Handle the case of an empty --file=
+      die 'ERROR: "--myserver_country" requires a non-empty option argument.'
+      ;;
+    -mss|--myserver_state)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        myserver_state=$2
+        shift
+      else
+        die 'ERROR: "--myserver_state" requires a non-empty option argument.'
+      fi
+      ;;
+    --myserver_state=?*)
+      myserver_state=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --myserver_state=)         # Handle the case of an empty --file=
+      die 'ERROR: "--myserver_state" requires a non-empty option argument.'
+      ;;
+    -msl|--myserver_location)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        myserver_location=$2
+        shift
+      else
+        die 'ERROR: "--myserver_location" requires a non-empty option argument.'
+      fi
+      ;;
+    --myserver_location=?*)
+      myserver_location=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --myserver_location=)         # Handle the case of an empty --file=
+      die 'ERROR: "--myserver_location" requires a non-empty option argument.'
+      ;;
+    -msou|--myserver_organizational_unit)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        myserver_organizational_unit=$2
+        shift
+      else
+        die 'ERROR: "--myserver_organizational_unit" requires a non-empty option argument.'
+      fi
+      ;;
+    --myserver_organizational_unit=?*)
+      myserver_organizational_unit=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --myserver_organizational_unit=)         # Handle the case of an empty --file=
+      die 'ERROR: "--myserver_organizational_unit" requires a non-empty option argument.'
+      ;;
+    -msfqdn|--myserver_fully_qualified_domain_name)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        myserver_fully_qualified_domain_name=$2
+        shift
+      else
+        die 'ERROR: "--myserver_fully_qualified_domain_name" requires a non-empty option argument.'
+      fi
+      ;;
+    --myserver_fully_qualified_domain_name=?*)
+      myserver_fully_qualified_domain_name=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --myserver_fully_qualified_domain_name=)         # Handle the case of an empty --file=
+      die 'ERROR: "--myserver_fully_qualified_domain_name" requires a non-empty option argument.'
+      ;;
+    -mson|--myserver_organization_name)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        myserver_organization_name=$2
+        shift
+      else
+        die 'ERROR: "--myserver_organization_name" requires a non-empty option argument.'
+      fi
+      ;;
+    --myserver_organization_name=?*)
+      myserver_organization_name=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --myserver_organization_name=)         # Handle the case of an empty --file=
+      die 'ERROR: "--myserver_organization_name" requires a non-empty option argument.'
       ;;
     --)              # End of all options.
       shift

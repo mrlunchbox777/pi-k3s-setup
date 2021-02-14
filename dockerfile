@@ -6,5 +6,5 @@ WORKDIR /
 
 RUN apk add --no-cache bind-tools openssh sshpass curl netcat-openbsd
 RUN curl -sLS https://get.k3sup.dev | sh
-COPY runme.sh ssh_give_pass.sh myserver.cnf /
+COPY runme.sh ssh_give_pass.sh /
 RUN chmod +x runme.sh ssh_give_pass.sh
