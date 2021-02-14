@@ -411,17 +411,6 @@ create_myserver_cnf() {
   echo "" >> myserver.cnf
 }
 
-# displayname=$certdisplayname # Friendly name for the cer
-# mypassword=$certpassword # Password for the cert
-# keyname="my_key.key"
-# requestname="my_request.csr"
-# publiccertname="my_cert.crt"
-# pfxname="my_pkcs.pfx"
-
-# openssl genrsa -out "./$keyname" 2048
-# openssl req -new -key "./$keyname" -out "./$requestname" -config myserver.cnf -passout pass:"$mypassword"
-# openssl x509 -req -days 3650 -in "./$requestname" -signkey "./$keyname" -out "./$publiccertname"
-# openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "./$publiccertname" -inkey "./$keyname" -out "./$pfxname" -name "$displayname" -passin pass:"$mypassword" -passout pass:"$mypassword"
 prep_the_cert() {
   write_block 2 "prep the cert"
   if [ -z "${id_rsa_pub_location}" ]; then
@@ -431,18 +420,33 @@ prep_the_cert() {
     mkdir -p "${id_rsa_pub_location}"
   fi
   if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
-    if [ -z "${admin_ssh_password}" ]; then
-      write_block 2 "Creating id_rsa without password..."
-      local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "")
-      most_recent_command_value=$?
-      write_block 2 "$keygen_output"
-      check_for_error $most_recent_command_value "target setup" "ssh-keygen without password"
-    else
-      local keygen_output=$(ssh-keygen -f "${id_rsa_pub_location}id_rsa" -N "${admin_ssh_password}")
-      most_recent_command_value=$?
-      write_block 2 "$keygen_output"
-      check_for_error $most_recent_command_value "target setup" "ssh-keygen with password"
-    fi
+    displayname="$hostname"
+    mypassword="${admin_ssh_password}"
+    keyname="${id_rsa_pub_location}id_rsa"
+    pubkeyname="${id_rsa_pub_location}id_rsa.pub"
+    requestname="${id_rsa_pub_location}request.csr"
+    publiccertname="${id_rsa_pub_location}cert.crt"
+    pfxname="${id_rsa_pub_location}pkcs.pfx"
+    local keygen_output=$(openssl genrsa -out "$keyname" 2048)
+    most_recent_command_value=$?
+    write_block 2 "$keygen_output"
+    check_for_error $most_recent_command_value "prep the cert" "keygen - rsa"
+    local keygen_output=$(openssl req -new -key "$keyname" -out "$requestname" -config myserver.cnf -passout pass:"$mypassword")
+    most_recent_command_value=$?
+    write_block 2 "$keygen_output"
+    check_for_error $most_recent_command_value "prep the cert" "keygen - csr"
+    local keygen_output=$(openssl x509 -req -days 365 -in "$requestname" -signkey "$keyname" -out "$publiccertname")
+    most_recent_command_value=$?
+    write_block 2 "$keygen_output"
+    check_for_error $most_recent_command_value "prep the cert" "keygen - crt"
+    local keygen_output=$(openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "$publiccertname" -inkey "$keyname" -out "$pfxname" -name "$displayname" -passin pass:"$mypassword" -passout pass:"$mypassword")
+    most_recent_command_value=$?
+    write_block 2 "$keygen_output"
+    check_for_error $most_recent_command_value "prep the cert" "keygen - pfx"
+    local keygen_output=$(ssh-keygen -y -f "$keyname" > "$pubkeyname")
+    most_recent_command_value=$?
+    write_block 2 "$keygen_output"
+    check_for_error $most_recent_command_value "prep the cert" "keygen - pub"
   fi
 
   write_block 2 "moving the keys out for password auth"
