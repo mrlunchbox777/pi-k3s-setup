@@ -263,7 +263,9 @@ validate_variables() {
     die 'ERROR: "$username" is not a valid username, please run with -h'
   fi
 
-  write_block 2 "assume valid \$password"
+  if [[ ! "$password" =~ ^.+$ ]]; then
+    die 'ERROR: "password" is not valid, please run with -h'
+  fi
 
   if [ ! -z "$cluster_server_name" ]; then
     host "$cluster_server_name" 2>&1 > /dev/null
@@ -278,7 +280,9 @@ validate_variables() {
     die 'ERROR: "$admin_username" is not a valid username, please run with -h'
   fi
 
-  write_block 2 "assume valid \$admin_ssh_password"
+  if [[ ! "$admin_ssh_password" =~ ^.+$ ]]; then
+    die 'ERROR: "admin_ssh_password" is not valid, please run with -h'
+  fi
 
   if [[ ! "$run_type" =~ ^(help|run)$ ]]; then
     die 'ERROR: "$run_type" is not valid, please run with -h'
