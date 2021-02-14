@@ -290,6 +290,17 @@ update_known_hosts() {
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
 }
 
+# displayname=$certdisplayname # Friendly name for the cer
+# mypassword=$certpassword # Password for the cert
+# keyname="my_key.key"
+# requestname="my_request.csr"
+# publiccertname="my_cert.crt"
+# pfxname="my_pkcs.pfx"
+
+# openssl genrsa -out "./$keyname" 2048
+# openssl req -new -key "./$keyname" -out "./$requestname" -config myserver.cnf -passout pass:"$mypassword"
+# openssl x509 -req -days 3650 -in "./$requestname" -signkey "./$keyname" -out "./$publiccertname"
+# openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "./$publiccertname" -inkey "./$keyname" -out "./$pfxname" -name "$displayname" -passin pass:"$mypassword" -passout pass:"$mypassword"
 prep_the_cert() {
   write_block 2 "prep the cert"
   if [ -z "${id_rsa_pub_location}" ]; then
@@ -468,6 +479,7 @@ run_k3sup() {
 }
 
 cleanup_run() {
+  # this doesn't need to be done because the user needs to be able to run sudo commands for k3sup
   # if [ ${skip_update} -eq 1 ]; then
   #   write_block 2 "move the sudoers file back"
   #   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
