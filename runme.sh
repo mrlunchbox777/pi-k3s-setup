@@ -16,7 +16,6 @@ skip_autoremove="${skip_autoremove:-0}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
-k3sup_failed=0
 
 write_block() {
   if [ $1 -le $verbose ]; then
@@ -385,7 +384,7 @@ second_command_run() {
     filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/cmdline.txt'); \
     regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
     if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"echo -n ' cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory ' >> /boot/cmdline.txt\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory /' /boot/cmdline.txt >/boot/cmdline.txt.new && mv /boot/cmdline.txt.new /boot/cmdline.txt\"; \
     fi; \
     if [ ${skip_update} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get update; \
@@ -455,15 +454,15 @@ run_k3sup() {
   if [ $1 -eq 1 ]; then
     check_for_error $most_recent_command_value "target setup" "k3sup install"
   else
-    k3sup_failed=1
+    return 1
   fi
   if [ ! -z "${cluster_server_name}" ]; then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server --local-path "./kubeconfig/kubeconfig"
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup join"
     else
-      k3sup_failed=1
+      return 1
     fi
   fi
 }
@@ -510,12 +509,13 @@ setup_target() {
   reboot
   install_k3sup_host
   wait_for_host
-  run_k3sup 0
-  if [ $k3sup_failed -eq 1 ]; then
+  {
+    run_k3sup 0
+  } || {
     write_block 0 "k3sup failed on first run, this happens sometimes because of cgroups, sleeping and trying again"
     sleep 30
     run_k3sup 1
-  fi
+  }
   cat_remote_docs "after k3sup"
   cleanup_run
   cat_remote_docs "after cleanup"
