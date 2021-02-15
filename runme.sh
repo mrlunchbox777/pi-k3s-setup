@@ -127,8 +127,8 @@ show_help() {
 }
 
 show_variables() {
-  local masked_password=$(echo -e $password | sed "s#1/#\*/#")
-  local masked_ssh_password=$(echo -e $admin_ssh_password | sed "s#1/#\*/#")
+  local masked_password=$(echo -e $password | sed "s/^.*/\***/#")
+  local masked_ssh_password=$(echo -e $admin_ssh_password | sed "s/^.*/\***/#")
 
   variablesArray=( "" )
   variablesArray+=( "----- Using The Following Variables -----" )
