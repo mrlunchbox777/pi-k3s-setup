@@ -557,7 +557,7 @@ second_command_run() {
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #2"
-  if ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" stat /etc/sudoers.bak \> /dev/null 2>\&1
+  if ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" stat /etc/sudoers.bak \> /dev/null 2>\&1
   then
     updated_sudoers=1
   fi
@@ -566,7 +566,7 @@ second_command_run() {
 reboot() {
   # TODO: extra output here
   {
-    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" " \
       echo -e \"${password}\" | sudo -S reboot now \
     "
   } || {
@@ -600,7 +600,7 @@ install_k3sup_host() {
 run_k3sup() {
   # TODO: extra output here
   write_block 2 "k3sup install node"
-  k3sup install --host ${hostname} --user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --cluster --local-path "./kubeconfig/kubeconfig"
+  k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" --cluster --local-path "./kubeconfig/kubeconfig"
   most_recent_command_value=$?
   if [ $1 -eq 1 ]; then
     check_for_error $most_recent_command_value "target setup" "k3sup install"
@@ -608,7 +608,7 @@ run_k3sup() {
     return 1
   fi
   if [ ! -z "${cluster_server_name}" ]; then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${id_rsa_pub_location}id_rsa" --server
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${keyname}" --server
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup join"
@@ -622,7 +622,7 @@ cleanup_run() {
   # this doesn't need to be done because the user needs to be able to run sudo commands for k3sup
   # if [ ${skip_update} -eq 1 ]; then
   #   write_block 2 "move the sudoers file back"
-  #   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+  #   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" " \
   #     sudo mv /etc/sudoers.bak /etc/sudoers; \
   #   "
   # fi
@@ -634,7 +634,7 @@ cat_remote_docs() {
     if [ ! -z "$1" ]; then
       write_block 2 "$1"
     fi
-    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" " \
       echo \"contents of /etc/sudoers\"; \
       echo \"\"; \
       echo -e \"${password}\" | sudo -S sh -c \"cat /etc/sudoers\"; \
