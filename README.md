@@ -1,5 +1,9 @@
 # pi-k3s-setup
 
+## Issues
+
+* k3sup join seems to be completing successfully, but it's not quite working
+
 ## Improvements
 
 * allow different pi user and different password
