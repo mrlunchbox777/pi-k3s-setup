@@ -610,6 +610,7 @@ wait_for_host() {
       wait_for_host_ready=1
     fi
     write_block 2 "Waiting for host to be ready..."
+    sleep .5
   done
 }
 
