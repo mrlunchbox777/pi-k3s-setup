@@ -22,6 +22,13 @@ myserver_organization_name="${myserver_organization_name:-'k3s'}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
+displayname="${hostname}"
+mypassword="${admin_ssh_password}"
+keyname="${id_rsa_pub_location}id_rsa"
+pubkeyname="${id_rsa_pub_location}id_rsa.pub"
+requestname="${id_rsa_pub_location}request.csr"
+publiccertname="${id_rsa_pub_location}cert.crt"
+pfxname="${id_rsa_pub_location}pkcs.pfx"
 
 write_block() {
   if [ $1 -le $verbose ]; then
@@ -419,14 +426,15 @@ prep_the_cert() {
   if [ ! -f "${id_rsa_pub_location}" ]; then
     mkdir -p "${id_rsa_pub_location}"
   fi
+  displayname="${hostname}"
+  mypassword="${admin_ssh_password}"
+  keyname="${id_rsa_pub_location}id_rsa"
+  pubkeyname="${id_rsa_pub_location}id_rsa.pub"
+  requestname="${id_rsa_pub_location}request.csr"
+  publiccertname="${id_rsa_pub_location}cert.crt"
+  pfxname="${id_rsa_pub_location}pkcs.pfx"
   if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
-    displayname="$hostname"
-    mypassword="${admin_ssh_password}"
-    keyname="${id_rsa_pub_location}id_rsa"
-    pubkeyname="${id_rsa_pub_location}id_rsa.pub"
-    requestname="${id_rsa_pub_location}request.csr"
-    publiccertname="${id_rsa_pub_location}cert.crt"
-    pfxname="${id_rsa_pub_location}pkcs.pfx"
+    create_myserver_cnf
     local keygen_output=$(openssl genrsa -out "$keyname" 2048)
     most_recent_command_value=$?
     write_block 2 "$keygen_output"
@@ -450,12 +458,16 @@ prep_the_cert() {
   fi
 
   write_block 2 "moving the keys out for password auth"
-  mv "${id_rsa_pub_location}id_rsa.pub" "${id_rsa_pub_location}id_rsa.tmp.pub"
-  mv "${id_rsa_pub_location}id_rsa" "${id_rsa_pub_location}id_rsa.tmp"
+  mkdir -p "/tmp${id_rsa_pub_location}"
+  mv "${pubkeyname}" "/tmp${pubkeyname}"
+  mv "${keyname}" "/tmp${keyname}"
+  mv "${requestname}" "/tmp${requestname}"
+  mv "${publiccertname}" "/tmp${publiccertname}"
+  mv "${pfxname}" "/tmp${pfxname}"
 
   write_block 2 "copy the public key to the target"
   # TODO: extra output here
-  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" "${id_rsa_pub_location}id_rsa.tmp.pub" pi@${hostname}:/tmp/id_rsa.pub)
+  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" "/tmp${pubkeyname}" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
@@ -488,8 +500,11 @@ first_command_run() {
 
 setup_cert_for_use() {
   write_block 2 "moving the keys out for password auth"
-  mv "${id_rsa_pub_location}id_rsa.tmp.pub" "${id_rsa_pub_location}id_rsa.pub"
-  mv "${id_rsa_pub_location}id_rsa.tmp" "${id_rsa_pub_location}id_rsa"
+  mv "/tmp${pubkeyname}" "${pubkeyname}"
+  mv "/tmp${keyname}" "${keyname}"
+  mv "/tmp${requestname}" "${requestname}"
+  mv "/tmp${publiccertname}" "${publiccertname}"
+  mv "/tmp${pfxname}" "${pfxname}"
 
   write_block 2 "set up use of the cert"
   # TODO: extra output here
