@@ -601,16 +601,16 @@ reboot() {
 }
 
 wait_for_host() {
-  write_block 2 "Waiting for host to be ready..."
   wait_for_host_ready=0
-  sleep 3
+  write_block 2 "Waiting for host to be ready..."
+  sleep 1
   while [ $wait_for_host_ready -eq 0 ]
   do
+    write_block 2 "Waiting for host to be ready..."
+    sleep .5
     if nc -zv ${hostname} 22 2>&1 | grep -q succeeded; then 
       wait_for_host_ready=1
     fi
-    write_block 2 "Waiting for host to be ready..."
-    sleep .5
   done
 }
 
