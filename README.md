@@ -19,6 +19,7 @@
 * split into multiple scripts
 * rename runme
 * rename repo
+* allow different target ssh user and key 
 
 ## Links
 
