@@ -15,6 +15,10 @@
 ## Improvements
 
 * allow different pi user and different password
+* update variable names
+* split into multiple scripts
+* rename runme
+* rename repo
 
 ## Links
 
