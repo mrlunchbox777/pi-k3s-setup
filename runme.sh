@@ -19,6 +19,8 @@ myserver_location="${myserver_location:-'SLC'}"
 myserver_organizational_unit="${myserver_organizational_unit:-'IT'}"
 myserver_fully_qualified_domain_name="${myserver_fully_qualified_domain_name:-'k3s.local'}"
 myserver_organization_name="${myserver_organization_name:-'k3s'}"
+skip_del_pi_user="${skip_del_pi_user:-0}"
+skip_deny_ssh_passwords="${skip_deny_ssh_passwords:-0}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -255,6 +257,18 @@ show_variables() {
   variablesArray+=( "  -mson/--myserver_organization_name" )
   variablesArray+=( "  desc: string for myserver.cnf, organization name, any amount of letters, default k3s" )
   variablesArray+=( "" )
+  variablesArray+=( "skip_del_pi_user=$skip_del_pi_user" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -sdpu/--skip_del_pi_user" )
+  variablesArray+=( "  desc: flag, skip deleting the pi user" )
+  variablesArray+=( "  note: delete pi user=0 skip delete pi user=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
+  variablesArray+=( "skip_deny_ssh_passwords=$skip_deny_ssh_passwords" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -sdsp/--skip_deny_ssh_passwords" )
+  variablesArray+=( "  desc: flag, skip denying the use of ssh with passwords" )
+  variablesArray+=( "  note: no ssh passwords=0 allow ssh passwords=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -339,6 +353,14 @@ validate_variables() {
 
   if [[ ! "$myserver_organization_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
     die 'ERROR: "$myserver_organization_name" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$skip_del_pi_user" =~ ^[0-1]$ ]]; then
+    die 'ERROR: "$skip_del_pi_user" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$skip_deny_ssh_passwords" =~ ^[0-1]$ ]]; then
+    die 'ERROR: "$skip_deny_ssh_passwords" is not valid, please run with -h'
   fi
 }
 
@@ -482,7 +504,9 @@ first_command_run() {
         echo \\\"${username}:${password}\\\" | chpasswd; \
       \"; \
     fi; \
-    echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
+    if [ ${skip_deny_ssh_passwords} -eq 0 ]; then \
+      echo -e raspberry | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
+    fi; \
     echo -e raspberry | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S chmod 600 /tmp/id_rsa.pub; \
     echo -e raspberry | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
@@ -527,10 +551,12 @@ setup_cert_for_use() {
 second_command_run() {
   # TODO: extra output here
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
-    getent passwd pi > /dev/null 2&>1; \
-    if [ \$? -eq 0 ]; then \
-      echo -e \"${password}\" | sudo -S killall -u pi; \
-      echo -e \"${password}\" | sudo -S userdel -f -r pi; \
+    if [ ${skip_del_pi_user} -eq 0 ]; then \
+      getent passwd pi > /dev/null 2&>1; \
+      if [ \$? -eq 0 ]; then \
+        echo -e \"${password}\" | sudo -S killall -u pi; \
+        echo -e \"${password}\" | sudo -S userdel -f -r pi; \
+      fi; \
     fi; \
     filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/cmdline.txt'); \
     regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
@@ -903,6 +929,12 @@ while :; do
       ;;
     --myserver_organization_name=)         # Handle the case of an empty --file=
       die 'ERROR: "--myserver_organization_name" requires a non-empty option argument.'
+      ;;
+    -sdpu|--skip_del_pi_user)       # Takes an option argument; ensure it has been specified.
+        skip_del_pi_user=1
+      ;;
+    -sdsp|--skip_deny_ssh_passwords)       # Takes an option argument; ensure it has been specified.
+        skip_deny_ssh_passwords=1
       ;;
     --)              # End of all options.
       shift
