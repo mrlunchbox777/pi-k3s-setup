@@ -627,18 +627,19 @@ install_k3sup_host() {
 run_k3sup() {
   # TODO: extra output here
   write_block 2 "k3sup install node"
-  k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" --cluster --local-path "./kubeconfig/kubeconfig"
-  most_recent_command_value=$?
-  if [ $1 -eq 1 ]; then
-    check_for_error $most_recent_command_value "target setup" "k3sup install"
-  else
-    return 1
-  fi
   if [ ! -z "${cluster_server_name}" ]; then
     k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${keyname}" --server
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup join"
+    else
+      return 1
+    fi
+  else
+    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" --cluster --local-path "./kubeconfig/kubeconfig"
+    most_recent_command_value=$?
+    if [ $1 -eq 1 ]; then
+      check_for_error $most_recent_command_value "target setup" "k3sup install"
     else
       return 1
     fi

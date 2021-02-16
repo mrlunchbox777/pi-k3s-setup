@@ -6,6 +6,7 @@
 
 ## Improvements
 
+* allow specifying the context for kubeconfig
 * allow different pi user and different password
 * allow use of only ssh keys
 * update variable names
