@@ -21,6 +21,9 @@ myserver_fully_qualified_domain_name="${myserver_fully_qualified_domain_name:-'k
 myserver_organization_name="${myserver_organization_name:-'k3s'}"
 skip_del_pi_user="${skip_del_pi_user:-0}"
 skip_deny_ssh_passwords="${skip_deny_ssh_passwords:-0}"
+context_name="${context_name:-'default'}"
+ssh_port="${ssh_port:-22}"
+cluster_ssh_port="${cluster_ssh_port:-22}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -269,6 +272,21 @@ show_variables() {
   variablesArray+=( "  desc: flag, skip denying the use of ssh with passwords" )
   variablesArray+=( "  note: no ssh passwords=0 allow ssh passwords=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
+  variablesArray+=( "context_name=$context_name" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -cn/--context_name" )
+  variablesArray+=( "  desc: the name of the context to use for the kubeconfig, default value is default" )
+  variablesArray+=( "" )
+  variablesArray+=( "ssh_port=$ssh_port" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -sp/--ssh_port" )
+  variablesArray+=( "  desc: the port to use for ssh, default value is 22" )
+  variablesArray+=( "" )
+  variablesArray+=( "cluster_ssh_port=$cluster_ssh_port" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -csp/--cluster_ssh_port" )
+  variablesArray+=( "  desc: the port to use for ssh for the cluster, default value is 22" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -361,6 +379,26 @@ validate_variables() {
 
   if [[ ! "$skip_deny_ssh_passwords" =~ ^[0-1]$ ]]; then
     die 'ERROR: "$skip_deny_ssh_passwords" is not valid, please run with -h'
+  fi
+
+  if [[ ! "$context_name" =~ ^.+$ ]]; then
+    die 'ERROR: "context_name" is not valid, please run with -h'
+  fi
+
+  if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then
+    if [ $ssh_port -lt 0 || $ssh_port -gt 65535 ]; then
+      die 'ERROR: "$ssh_port" is not a valid port, please run with -h'
+    fi
+  else
+    die 'ERROR: "$ssh_port" is not a valid port, please run with -h'
+  fi
+
+  if [[ "$cluster_ssh_port" =~ ^[0-9]+$ ]]; then
+    if [ $cluster_ssh_port -lt 1 || $cluster_ssh_port -gt 65535 ]; then
+      die 'ERROR: "$cluster_ssh_port" is not a valid port, please run with -h'
+    fi
+  else
+    die 'ERROR: "$cluster_ssh_port" is not a valid port, please run with -h'
   fi
 }
 
@@ -937,6 +975,48 @@ while :; do
       ;;
     -sdsp|--skip_deny_ssh_passwords)       # Takes an option argument; ensure it has been specified.
         skip_deny_ssh_passwords=1
+      ;;
+    -cn|--context_name)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        context_name=$2
+        shift
+      else
+        die 'ERROR: "--context_name" requires a non-empty option argument.'
+      fi
+      ;;
+    --context_name=?*)
+      context_name=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --context_name=)         # Handle the case of an empty --file=
+      die 'ERROR: "--context_name" requires a non-empty option argument.'
+      ;;
+    -sp|--ssh_port)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        ssh_port=$2
+        shift
+      else
+        die 'ERROR: "--ssh_port" requires a non-empty option argument.'
+      fi
+      ;;
+    --ssh_port=?*)
+      ssh_port=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --ssh_port=)         # Handle the case of an empty --file=
+      die 'ERROR: "--ssh_port" requires a non-empty option argument.'
+      ;;
+    -csp|--cluster_ssh_port)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        cluster_ssh_port=$2
+        shift
+      else
+        die 'ERROR: "--cluster_ssh_port" requires a non-empty option argument.'
+      fi
+      ;;
+    --cluster_ssh_port=?*)
+      cluster_ssh_port=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --cluster_ssh_port=)         # Handle the case of an empty --file=
+      die 'ERROR: "--cluster_ssh_port" requires a non-empty option argument.'
       ;;
     --)              # End of all options.
       shift
