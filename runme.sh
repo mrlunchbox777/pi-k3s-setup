@@ -426,7 +426,7 @@ update_known_hosts() {
 
   write_block 2 "add fingerprint to known_hosts"
   # TODO: extra output here
-  local host_fingerprint_output=$(sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" pi@${hostname} "echo got fingerprint")
+  local host_fingerprint_output=$(sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} pi@${hostname} "echo got fingerprint")
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
@@ -527,14 +527,14 @@ prep_the_cert() {
 
   write_block 2 "copy the public key to the target"
   # TODO: extra output here
-  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" "/tmp${pubkeyname}" pi@${hostname}:/tmp/id_rsa.pub)
+  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" -p ${ssh_port} "/tmp${pubkeyname}" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
 }
 
 first_command_run() {
-  sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} " \
+  sshpass -p raspberry ssh -o "UserKnownHostsFile /tmp/known_hosts" pi@${hostname} -p ${ssh_port} " \
     getent passwd ${username} > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
       echo -e raspberry | sudo -S sh -c \" \
@@ -588,7 +588,7 @@ setup_cert_for_use() {
 
 second_command_run() {
   # TODO: extra output here
-  ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" " \
+  ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" -p ${ssh_port} " \
     if [ ${skip_del_pi_user} -eq 0 ]; then \
       getent passwd pi > /dev/null 2&>1; \
       if [ \$? -eq 0 ]; then \
@@ -630,7 +630,7 @@ second_command_run() {
 reboot() {
   # TODO: extra output here
   {
-    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" " \
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" -p ${ssh_port} " \
       echo -e \"${password}\" | sudo -S reboot now \
     "
   } || {
@@ -646,7 +646,7 @@ wait_for_host() {
   do
     write_block 2 "Waiting for host to be ready..."
     sleep .5
-    if nc -zv ${hostname} 22 2>&1 | grep -q succeeded; then 
+    if nc -zv ${hostname} ${ssh_port} 2>&1 | grep -q succeeded; then 
       wait_for_host_ready=1
     fi
   done
@@ -688,7 +688,7 @@ cleanup_run() {
   # this doesn't need to be done because the user needs to be able to run sudo commands for k3sup
   # if [ ${skip_update} -eq 1 ]; then
   #   write_block 2 "move the sudoers file back"
-  #   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" " \
+  #   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" -p ${ssh_port} " \
   #     sudo mv /etc/sudoers.bak /etc/sudoers; \
   #   "
   # fi
@@ -700,7 +700,7 @@ cat_remote_docs() {
     if [ ! -z "$1" ]; then
       write_block 2 "$1"
     fi
-    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" " \
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" -p ${ssh_port} " \
       echo \"contents of /etc/sudoers\"; \
       echo \"\"; \
       echo -e \"${password}\" | sudo -S sh -c \"cat /etc/sudoers\"; \
