@@ -386,7 +386,7 @@ validate_variables() {
   fi
 
   if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then
-    if [ $ssh_port -lt 0 || $ssh_port -gt 65535 ]; then
+    if [ $ssh_port -lt 0 ] || [ $ssh_port -gt 65535 ]; then
       die 'ERROR: "$ssh_port" is not a valid port, please run with -h'
     fi
   else
@@ -394,7 +394,7 @@ validate_variables() {
   fi
 
   if [[ "$cluster_ssh_port" =~ ^[0-9]+$ ]]; then
-    if [ $cluster_ssh_port -lt 1 || $cluster_ssh_port -gt 65535 ]; then
+    if [ $cluster_ssh_port -lt 1 ] || [ $cluster_ssh_port -gt 65535 ]; then
       die 'ERROR: "$cluster_ssh_port" is not a valid port, please run with -h'
     fi
   else
@@ -527,7 +527,7 @@ prep_the_cert() {
 
   write_block 2 "copy the public key to the target"
   # TODO: extra output here
-  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" -p ${ssh_port} "/tmp${pubkeyname}" pi@${hostname}:/tmp/id_rsa.pub)
+  local scp_output=$(sshpass -p raspberry scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" pi@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
@@ -666,7 +666,7 @@ run_k3sup() {
   # TODO: extra output here
   write_block 2 "k3sup install node"
   if [ ! -z "${cluster_server_name}" ]; then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${keyname}" --server
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${keyname}" --server --server-ssh-port ${cluster_ssh_port} --ssh-port ${ssh_port}
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup join"
@@ -674,7 +674,7 @@ run_k3sup() {
       return 1
     fi
   else
-    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" --cluster --local-path "./kubeconfig/kubeconfig"
+    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" --cluster --local-path "./kubeconfig/kubeconfig" --ssh-port ${ssh_port} --context "${context_name}"
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup install"
