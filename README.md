@@ -2,7 +2,7 @@
 
 ## Issues
 
-* k3sup join seems to be completing successfully, but it's not quite working
+* No issues creating the cluster at this point, but lots of improvements
 
 ## Improvements
 
