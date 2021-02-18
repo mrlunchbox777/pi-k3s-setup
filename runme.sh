@@ -73,7 +73,7 @@ check_for_error() {
 }
 
 is_valid_username() {
-  local re='^[[:lower:]_][[:lower:][:digit:]_-]{2,15}$'
+  local re='^[[:lower:]_][[:lower:][:digit:]_-]{1,15}$'
   (( ${#1} > 16 )) && return 1
   [[ $1 =~ $re ]] # return value of this comparison is used for the function
 }
@@ -446,7 +446,7 @@ update_known_hosts() {
 
   write_block 2 "add fingerprint to known_hosts"
   # TODO: extra output here
-  local host_fingerprint_output=$(sshpass -p "${initial_target_username}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${hostname} "echo got fingerprint")
+  local host_fingerprint_output=$(sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${hostname} "echo got fingerprint")
   most_recent_command_value=$?
   write_block 2 "$host_fingerprint_output"
   check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
@@ -547,34 +547,34 @@ prep_the_cert() {
 
   write_block 2 "copy the public key to the target"
   # TODO: extra output here
-  local scp_output=$(sshpass -p "${initial_target_username}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${hostname}:/tmp/id_rsa.pub)
+  local scp_output=$(sshpass -p "${initial_target_password}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${hostname}:/tmp/id_rsa.pub)
   most_recent_command_value=$?
   write_block 2 "scp_output - $scp_output"
   check_for_error $most_recent_command_value "target setup" "scp"
 }
 
 first_command_run() {
-  sshpass -p "${initial_target_username}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${hostname} -p ${ssh_port} " \
+  sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${hostname} -p ${ssh_port} " \
     getent passwd ${username} > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
-      echo -e \"${initial_target_username}\" | sudo -S sh -c \" \
-        echo -e \"${initial_target_username}\" | sudo -S useradd -m -G sudo ${username}; \
+      echo -e \"${initial_target_password}\" | sudo -S sh -c \" \
+        echo -e \"${initial_target_password}\" | sudo -S useradd -m -G sudo ${username}; \
         echo \\\"${username}:${password}\\\" | chpasswd; \
       \"; \
     fi; \
     if [ ${skip_deny_ssh_passwords} -eq 0 ]; then \
-      echo -e \"${initial_target_username}\" | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
+      echo -e \"${initial_target_password}\" | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     fi; \
-    echo -e \"${initial_target_username}\" | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
-    echo -e \"${initial_target_username}\" | sudo -S chmod 600 /tmp/id_rsa.pub; \
-    echo -e \"${initial_target_username}\" | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
-    echo -e \"${initial_target_username}\" | sudo -S chown ${username}:$username \"/home/${username}/.ssh/\"; \
-    echo -e \"${initial_target_username}\" | sudo -S chmod 700 \"/home/${username}/.ssh/\"; \
-    echo -e \"${initial_target_username}\" | sudo -S -u ${username} sh -c 'cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"'; \
-    echo -e \"${initial_target_username}\" | sudo -S -u ${username} sh -c 'chown ${username}:$username \"/home/${username}/.ssh/authorized_keys\"'; \
-    echo -e \"${initial_target_username}\" | sudo -S -u ${username} sh -c 'chmod 600 \"/home/${username}/.ssh/authorized_keys\"'; \
-    echo -e \"${initial_target_username}\" | sudo -S rm /tmp/id_rsa.pub; \
-    echo -e \"${initial_target_username}\" | sudo -S service ssh restart; \
+    echo -e \"${initial_target_password}\" | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
+    echo -e \"${initial_target_password}\" | sudo -S chmod 600 /tmp/id_rsa.pub; \
+    echo -e \"${initial_target_password}\" | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
+    echo -e \"${initial_target_password}\" | sudo -S chown ${username}:$username \"/home/${username}/.ssh/\"; \
+    echo -e \"${initial_target_password}\" | sudo -S chmod 700 \"/home/${username}/.ssh/\"; \
+    echo -e \"${initial_target_password}\" | sudo -S -u ${username} sh -c 'cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e \"${initial_target_password}\" | sudo -S -u ${username} sh -c 'chown ${username}:$username \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e \"${initial_target_password}\" | sudo -S -u ${username} sh -c 'chmod 600 \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e \"${initial_target_password}\" | sudo -S rm /tmp/id_rsa.pub; \
+    echo -e \"${initial_target_password}\" | sudo -S service ssh restart; \
   "
   most_recent_command_value=$?
   check_for_error $most_recent_command_value "target setup" "ssh block #1"
