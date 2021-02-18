@@ -6,8 +6,6 @@
 
 ## Improvements
 
-* allow different pi user and different password
-* allow different target ssh user and key 
 * allow different cluster ssh user and key 
 * allow use of only ssh keys
 * update variable names
