@@ -24,6 +24,8 @@ skip_deny_ssh_passwords="${skip_deny_ssh_passwords:-0}"
 context_name="${context_name:-'default'}"
 ssh_port="${ssh_port:-22}"
 cluster_ssh_port="${cluster_ssh_port:-22}"
+initial_target_username="${initial_target_username:-'pi'}"
+initial_target_password="${initial_target_password:-'raspberry'}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -287,6 +289,16 @@ show_variables() {
   variablesArray+=( "  -csp/--cluster_ssh_port" )
   variablesArray+=( "  desc: the port to use for ssh for the cluster, default value is 22" )
   variablesArray+=( "" )
+  variablesArray+=( "initial_target_username=$initial_target_username" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -itu/--initial_target_username" )
+  variablesArray+=( "  desc: the initial username for the target, default value is pi" )
+  variablesArray+=( "" )
+  variablesArray+=( "initial_target_password=$initial_target_password" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -itp/--initial_target_password" )
+  variablesArray+=( "  desc: the initial password for the target, default value is raspberry" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -399,6 +411,14 @@ validate_variables() {
     fi
   else
     die 'ERROR: "$cluster_ssh_port" is not a valid port, please run with -h'
+  fi
+
+  if ! is_valid_username "$initial_target_username"; then
+    die 'ERROR: "$initial_target_username" is not a valid username, please run with -h'
+  fi
+
+  if [[ ! "$initial_target_password" =~ ^.+$ ]]; then
+    die 'ERROR: "initial_target_password" is not valid, please run with -h'
   fi
 }
 
@@ -1017,6 +1037,34 @@ while :; do
       ;;
     --cluster_ssh_port=)         # Handle the case of an empty --file=
       die 'ERROR: "--cluster_ssh_port" requires a non-empty option argument.'
+      ;;
+    -itu|--initial_target_username)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        initial_target_username=$2
+        shift
+      else
+        die 'ERROR: "--initial_target_username" requires a non-empty option argument.'
+      fi
+      ;;
+    --initial_target_username=?*)
+      initial_target_username=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --initial_target_username=)         # Handle the case of an empty --file=
+      die 'ERROR: "--initial_target_username" requires a non-empty option argument.'
+      ;;
+    -itp|--initial_target_password)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        initial_target_password=$2
+        shift
+      else
+        die 'ERROR: "--initial_target_password" requires a non-empty option argument.'
+      fi
+      ;;
+    --initial_target_password=?*)
+      initial_target_password=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --initial_target_password=)         # Handle the case of an empty --file=
+      die 'ERROR: "--initial_target_password" requires a non-empty option argument.'
       ;;
     --)              # End of all options.
       shift
