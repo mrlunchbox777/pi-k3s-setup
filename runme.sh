@@ -26,6 +26,7 @@ ssh_port="${ssh_port:-22}"
 cluster_ssh_port="${cluster_ssh_port:-22}"
 initial_target_username="${initial_target_username:-"pi"}"
 initial_target_password="${initial_target_password:-"raspberry"}"
+cluster_username="${cluster_username:-"${username}"}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -300,6 +301,11 @@ show_variables() {
   variablesArray+=( "  -itp/--initial_target_password" )
   variablesArray+=( "  desc: the initial password for the target, default value is raspberry" )
   variablesArray+=( "" )
+  variablesArray+=( "cluster_username=$cluster_username" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -cu/--cluster_username" )
+  variablesArray+=( "  desc: the username to use for the cluster, default value \$cluster_username=\"\$username (${username})" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -420,6 +426,10 @@ validate_variables() {
 
   if [[ ! "$initial_target_password" =~ ^.+$ ]]; then
     die "ERROR: \"\$initial_target_password\" is not valid, please run with -h"
+  fi
+
+  if ! is_valid_username "$cluster_username"; then
+    die "ERROR: \"$cluster_username\" is not a valid username, please run with -h"
   fi
 }
 
@@ -687,7 +697,7 @@ run_k3sup() {
   # TODO: extra output here
   write_block 2 "k3sup install node"
   if [ ! -z "${cluster_server_name}" ]; then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${username} --ssh-key "${keyname}" --server --server-ssh-port ${cluster_ssh_port} --ssh-port ${ssh_port}
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${cluster_username} --ssh-key "${keyname}" --server --server-ssh-port ${cluster_ssh_port} --ssh-port ${ssh_port}
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup join"
@@ -1066,6 +1076,20 @@ while :; do
       ;;
     --initial_target_password=)         # Handle the case of an empty --file=
       die 'ERROR: "--initial_target_password" requires a non-empty option argument.'
+      ;;
+    -cu|--cluster_username)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        cluster_username=$2
+        shift
+      else
+        die 'ERROR: "--cluster_username" requires a non-empty option argument.'
+      fi
+      ;;
+    --cluster_username=?*)
+      cluster_username=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --cluster_username=)         # Handle the case of an empty --file=
+      die 'ERROR: "--cluster_username" requires a non-empty option argument.'
       ;;
     --)              # End of all options.
       shift

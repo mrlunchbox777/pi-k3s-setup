@@ -6,7 +6,6 @@
 
 ## Improvements
 
-* allow different cluster ssh user and key 
 * allow use of only ssh keys
 * update variable names
 * split into multiple scripts
