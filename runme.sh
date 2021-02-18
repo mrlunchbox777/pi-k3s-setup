@@ -131,6 +131,7 @@ show_help() {
   write_block 1 "${instructionArray[@]}"
 }
 
+# Still requires variables
 show_variables() {
   local masked_password=$(echo -e $password | sed "s/^.*/\***/#")
   local masked_ssh_password=$(echo -e $admin_ssh_password | sed "s/^.*/\***/#")
@@ -498,7 +499,7 @@ create_myserver_cnf() {
   echo "" >> myserver.cnf
 }
 
-prep_the_cert() {
+create_and_send_the_cert() {
   write_block 2 "prep the cert"
   if [ -z "${id_rsa_pub_location}" ]; then
     id_rsa_pub_location="/home/${admin_username}/.ssh/"
@@ -738,7 +739,7 @@ cat_remote_docs() {
 setup_target() {
   wait_for_host
   update_known_hosts
-  prep_the_cert
+  create_and_send_the_cert
   first_command_run
   setup_cert_for_use
   cat_remote_docs "before second command"
