@@ -27,6 +27,7 @@ cluster_ssh_port="${cluster_ssh_port:-22}"
 initial_target_username="${initial_target_username:-"pi"}"
 initial_target_password="${initial_target_password:-"raspberry"}"
 cluster_username="${cluster_username:-"${username}"}"
+always_use_key="${always_use_key:-0}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -306,6 +307,12 @@ show_variables() {
   variablesArray+=( "  -cu/--cluster_username" )
   variablesArray+=( "  desc: the username to use for the cluster, default value \$cluster_username=\"\$username (${username})" )
   variablesArray+=( "" )
+  variablesArray+=( "always_use_key=$always_use_key" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -sdsp/--always_use_key" )
+  variablesArray+=( "  desc: flag, only use ssh keys" )
+  variablesArray+=( "  note: use initial username and password=0 only use ssh keys=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -314,11 +321,11 @@ show_variables() {
 validate_variables() {
   host "$hostname" 2>&1 > /dev/null
   if [ ! $? -eq 0 ]; then
-    die "ERROR: \"$hostname\" is not a valid hostname, please run with -h"
+    die "ERROR: \$hostname \"$hostname\" is not a valid hostname, please run with -h"
   fi
 
   if ! is_valid_username "$username"; then
-    die "ERROR: \"$username\" is not a valid username, please run with -h"
+    die "ERROR: \$username \"$username\" is not a valid username, please run with -h"
   fi
 
   if [[ ! "$password" =~ ^.+$ ]]; then
@@ -328,14 +335,14 @@ validate_variables() {
   if [ ! -z "$cluster_server_name" ]; then
     host "$cluster_server_name" 2>&1 > /dev/null
     if [ ! $? -eq 0 ]; then
-      die "ERROR: \"$cluster_server_name\" is not a valid hostname, please run with -h"
+      die "ERROR: \$cluster_server_name \"$cluster_server_name\" is not a valid hostname, please run with -h"
     fi
   fi
 
   write_block 2 "assume valid \$id_rsa_pub_location"
 
   if ! is_valid_username "$admin_username"; then
-    die "ERROR: \"$admin_username\" is not a valid username, please run with -h"
+    die "ERROR: \$admin_username \"$admin_username\" is not a valid username, please run with -h"
   fi
 
   if [[ ! "$admin_ssh_password" =~ ^.+$ ]]; then
@@ -343,85 +350,85 @@ validate_variables() {
   fi
 
   if [[ ! "$run_type" =~ ^(help|run)$ ]]; then
-    die "ERROR: \"$run_type\" is not valid, please run with -h"
+    die "ERROR: \$run_type \"$run_type\" is not valid, please run with -h"
   fi
 
   if [[ ! "$verbose" =~ ^[0-9]+$ ]]; then
-    die "ERROR: \"$verbose\" is not valid, please run with -h"
+    die "ERROR: \$verbose \"$verbose\" is not valid, please run with -h"
   fi
 
   if [ ! -z "$interactive" ]; then
     if [[ ! "$interactive" =~ ^[0-1]$ ]]; then
-      die "ERROR: \"$interactive\" is not valid, please run with -h"
+      die "ERROR: \$interactive \"$interactive\" is not valid, please run with -h"
     fi
   fi
 
   if [[ ! "$skip_update" =~ ^[0-1]$ ]]; then
-    die "ERROR: \"$skip_update\" is not valid, please run with -h"
+    die "ERROR: \$skip_update \"$skip_update\" is not valid, please run with -h"
   fi
 
   if [[ ! "$skip_upgrade" =~ ^[0-1]$ ]]; then
-    die "ERROR: \"$skip_upgrade\" is not valid, please run with -h"
+    die "ERROR: \$skip_upgrade \"$skip_upgrade\" is not valid, please run with -h"
   fi
 
   if [[ ! "$skip_autoremove" =~ ^[0-1]$ ]]; then
-    die "ERROR: \"$skip_autoremove\" is not valid, please run with -h"
+    die "ERROR: \$skip_autoremove \"$skip_autoremove\" is not valid, please run with -h"
   fi
 
   if [[ ! "$myserver_country" =~ ^[a-zA-z]{2,3}$ ]]; then
-    die "ERROR: \"$myserver_country\" is not valid, please run with -h"
+    die "ERROR: \$myserver_country \"$myserver_country\" is not valid, please run with -h"
   fi
 
   if [[ ! "$myserver_state" =~ ^[a-zA-z]{2,3}$ ]]; then
-    die "ERROR: \"$myserver_state\" is not valid, please run with -h"
+    die "ERROR: \$myserver_state \"$myserver_state\" is not valid, please run with -h"
   fi
 
   if [[ ! "$myserver_location" =~ ^[a-zA-z]+$ ]]; then
-    die "ERROR: \"$myserver_location\" is not valid, please run with -h"
+    die "ERROR: \$myserver_location \"$myserver_location\" is not valid, please run with -h"
   fi
 
   if [[ ! "$myserver_organizational_unit" =~ ^[a-zA-z]+$ ]]; then
-    die "ERROR: \"$myserver_organizational_unit\" is not valid, please run with -h"
+    die "ERROR: \$myserver_organizational_unit \"$myserver_organizational_unit\" is not valid, please run with -h"
   fi
 
   if [[ ! "$myserver_fully_qualified_domain_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    die "ERROR: \"$myserver_fully_qualified_domain_name\" is not valid, please run with -h"
+    die "ERROR: \$myserver_fully_qualified_domain_name \"$myserver_fully_qualified_domain_name\" is not valid, please run with -h"
   fi
 
   if [[ ! "$myserver_organization_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    die "ERROR: \"$myserver_organization_name\" is not valid, please run with -h"
+    die "ERROR: \$myserver_organization_name \"$myserver_organization_name\" is not valid, please run with -h"
   fi
 
   if [[ ! "$skip_del_pi_user" =~ ^[0-1]$ ]]; then
-    die "ERROR: \"$skip_del_pi_user\" is not valid, please run with -h"
+    die "ERROR: \$skip_del_pi_user \"$skip_del_pi_user\" is not valid, please run with -h"
   fi
 
   if [[ ! "$skip_deny_ssh_passwords" =~ ^[0-1]$ ]]; then
-    die "ERROR: \"$skip_deny_ssh_passwords\" is not valid, please run with -h"
+    die "ERROR: \$skip_deny_ssh_passwords \"$skip_deny_ssh_passwords\" is not valid, please run with -h"
   fi
 
   if [[ ! "$context_name" =~ ^.+$ ]]; then
-    die "ERROR: \"$context_name\" is not valid, please run with -h"
+    die "ERROR: \$context_name \"$context_name\" is not valid, please run with -h"
   fi
 
   if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then
     if [ $ssh_port -lt 0 ] || [ $ssh_port -gt 65535 ]; then
-      die "ERROR: \"$ssh_port\" is not a valid port, please run with -h"
+      die "ERROR: \$ssh_port \"$ssh_port\" is not a valid port, please run with -h"
     fi
   else
-    die "ERROR: \"$ssh_port\" is not a valid port, please run with -h"
+    die "ERROR: \$ssh_port \"$ssh_port\" is not a valid port, please run with -h"
   fi
 
   if [[ "$cluster_ssh_port" =~ ^[0-9]+$ ]]; then
     if [ $cluster_ssh_port -lt 1 ] || [ $cluster_ssh_port -gt 65535 ]; then
-      die "ERROR: \"$cluster_ssh_port\" is not a valid port, please run with -h"
+      die "ERROR: \$cluster_ssh_port \"$cluster_ssh_port\" is not a valid port, please run with -h"
     fi
   else
-    die "ERROR: \"$cluster_ssh_port\" is not a valid port, please run with -h"
+    die "ERROR: \$cluster_ssh_port \"$cluster_ssh_port\" is not a valid port, please run with -h"
   fi
 
   if ! is_valid_username "$initial_target_username"; then
-    die "ERROR: \"$initial_target_username\" is not a valid username, please run with -h"
+    die "ERROR: \$initial_target_username \"$initial_target_username\" is not a valid username, please run with -h"
   fi
 
   if [[ ! "$initial_target_password" =~ ^.+$ ]]; then
@@ -429,7 +436,11 @@ validate_variables() {
   fi
 
   if ! is_valid_username "$cluster_username"; then
-    die "ERROR: \"$cluster_username\" is not a valid username, please run with -h"
+    die "ERROR: \$cluster_username \"$cluster_username\" is not a valid username, please run with -h"
+  fi
+
+  if [[ ! "$always_use_key" =~ ^[0-1]$ ]]; then
+    die "ERROR: \$always_use_key \"$always_use_key\" is not valid, please run with -h"
   fi
 }
 
@@ -1090,6 +1101,9 @@ while :; do
       ;;
     --cluster_username=)         # Handle the case of an empty --file=
       die 'ERROR: "--cluster_username" requires a non-empty option argument.'
+      ;;
+    -sdsp|--always_use_key)       # Takes an option argument; ensure it has been specified.
+        always_use_key=1
       ;;
     --)              # End of all options.
       shift
