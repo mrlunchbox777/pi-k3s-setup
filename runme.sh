@@ -329,7 +329,7 @@ validate_variables() {
   fi
 
   if [[ ! "$password" =~ ^.+$ ]]; then
-    die "ERROR: \"\$password\" is not valid, please run with -h"
+    die "ERROR: \$password \"***\" is not valid, please run with -h"
   fi
 
   if [ ! -z "$cluster_server_name" ]; then
@@ -346,7 +346,7 @@ validate_variables() {
   fi
 
   if [[ ! "$admin_ssh_password" =~ ^.+$ ]]; then
-    die "ERROR: \"\$admin_ssh_password\" is not valid, please run with -h"
+    die "ERROR: \$admin_ssh_password \"***\" is not valid, please run with -h"
   fi
 
   if [[ ! "$run_type" =~ ^(help|run)$ ]]; then
@@ -432,7 +432,7 @@ validate_variables() {
   fi
 
   if [[ ! "$initial_target_password" =~ ^.+$ ]]; then
-    die "ERROR: \"\$initial_target_password\" is not valid, please run with -h"
+    die "ERROR: \$initial_target_password \"***\" is not valid, please run with -h"
   fi
 
   if ! is_valid_username "$cluster_username"; then
