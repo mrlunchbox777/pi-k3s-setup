@@ -7,6 +7,7 @@
 ## Improvements
 
 * allow use of only ssh keys
+* allow adding a non-server node
 * update variable names
 * split into multiple scripts
 * rename runme

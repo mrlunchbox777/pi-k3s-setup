@@ -761,7 +761,7 @@ setup_target() {
   {
     run_k3sup 0
   } || {
-    write_block 0 "k3sup failed on first run, this happens sometimes because of cgroups, sleeping and trying again"
+    write_block 0 "k3sup failed on first run. This happens sometimes because of timeouts, boot time, cgroups, etc. Sleeping and trying again"
     sleep 30
     run_k3sup 1
   }
