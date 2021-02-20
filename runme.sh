@@ -468,13 +468,21 @@ update_known_hosts() {
 
   write_block 2 "add fingerprint to known_hosts"
   # TODO: extra output here
-  local host_fingerprint_output=$(sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${hostname} "echo got fingerprint")
-  most_recent_command_value=$?
-  write_block 2 "$host_fingerprint_output"
-  check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
+  if [ $always_use_key -gt 0 ]; then
+    local host_fingerprint_output=$(ssh -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${username}"@${hostname} "echo got fingerprint")
+    most_recent_command_value=$?
+    write_block 2 "$host_fingerprint_output"
+    check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
+  else
+    local host_fingerprint_output=$(sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${hostname} "echo got fingerprint")
+    most_recent_command_value=$?
+    write_block 2 "$host_fingerprint_output"
+    check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
+  fi
 }
 
 create_myserver_cnf() {
+  write_block 2 "creating the openssl configuration"
   echo "# OpenSSL configuration file for creating a CSR for a server certificate" >> myserver.cnf
   echo "# Adapt at least the FQDN and ORGNAME lines, and then run" >> myserver.cnf 
   echo "# openssl req -new -config myserver.cnf -keyout myserver.key -out myserver.csr" >> myserver.cnf
@@ -535,8 +543,9 @@ create_and_send_the_cert() {
   requestname="${id_rsa_pub_location}request.csr"
   publiccertname="${id_rsa_pub_location}cert.crt"
   pfxname="${id_rsa_pub_location}pkcs.pfx"
-  if [ ! -f "${id_rsa_pub_location}id_rsa" ]; then
+  if [ ! -f "${keyname}" ]; then
     create_myserver_cnf
+    write_block 2 "creating self-signed cert files"
     local keygen_output=$(openssl genrsa -out "$keyname" 2048)
     most_recent_command_value=$?
     write_block 2 "$keygen_output"
@@ -569,37 +578,61 @@ create_and_send_the_cert() {
 
   write_block 2 "copy the public key to the target"
   # TODO: extra output here
-  local scp_output=$(sshpass -p "${initial_target_password}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${hostname}:/tmp/id_rsa.pub)
-  most_recent_command_value=$?
-  write_block 2 "scp_output - $scp_output"
-  check_for_error $most_recent_command_value "target setup" "scp"
+  if [ $always_use_key -gt 0 ]; then
+    write_block 2 "sending the cert with cert"
+    local scp_output=$(scp -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${username}"@${hostname}:/tmp/id_rsa.pub)
+    most_recent_command_value=$?
+    write_block 2 "scp_output - $scp_output"
+    check_for_error $most_recent_command_value "target setup" "scp"
+  else
+    write_block 2 "sending the cert with username and password"
+    local scp_output=$(sshpass -p "${initial_target_password}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${hostname}:/tmp/id_rsa.pub)
+    most_recent_command_value=$?
+    write_block 2 "scp_output - $scp_output"
+    check_for_error $most_recent_command_value "target setup" "scp"
+  fi
 }
 
 first_command_run() {
-  sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${hostname} -p ${ssh_port} " \
+  password_to_use=""
+  if [ $always_use_key -gt 0 ]; then
+    password_to_use="${password}"
+  else
+    password_to_use="${initial_target_password}"
+  fi
+  execString=" \
     getent passwd ${username} > /dev/null 2&>1; \
     if [ ! \$? -eq 0 ]; then \
-      echo -e \"${initial_target_password}\" | sudo -S sh -c \" \
-        echo -e \"${initial_target_password}\" | sudo -S useradd -m -G sudo ${username}; \
+      echo -e \"${password_to_use}\" | sudo -S sh -c \" \
+        echo -e \"${password_to_use}\" | sudo -S useradd -m -G sudo ${username}; \
         echo \\\"${username}:${password}\\\" | chpasswd; \
       \"; \
     fi; \
     if [ ${skip_deny_ssh_passwords} -eq 0 ]; then \
-      echo -e \"${initial_target_password}\" | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
+      echo -e \"${password_to_use}\" | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     fi; \
-    echo -e \"${initial_target_password}\" | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
-    echo -e \"${initial_target_password}\" | sudo -S chmod 600 /tmp/id_rsa.pub; \
-    echo -e \"${initial_target_password}\" | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
-    echo -e \"${initial_target_password}\" | sudo -S chown ${username}:$username \"/home/${username}/.ssh/\"; \
-    echo -e \"${initial_target_password}\" | sudo -S chmod 700 \"/home/${username}/.ssh/\"; \
-    echo -e \"${initial_target_password}\" | sudo -S -u ${username} sh -c 'cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"'; \
-    echo -e \"${initial_target_password}\" | sudo -S -u ${username} sh -c 'chown ${username}:$username \"/home/${username}/.ssh/authorized_keys\"'; \
-    echo -e \"${initial_target_password}\" | sudo -S -u ${username} sh -c 'chmod 600 \"/home/${username}/.ssh/authorized_keys\"'; \
-    echo -e \"${initial_target_password}\" | sudo -S rm /tmp/id_rsa.pub; \
-    echo -e \"${initial_target_password}\" | sudo -S service ssh restart; \
+    echo -e \"${password_to_use}\" | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
+    echo -e \"${password_to_use}\" | sudo -S chmod 600 /tmp/id_rsa.pub; \
+    echo -e \"${password_to_use}\" | sudo -S -u ${username} mkdir -p \"/home/${username}/.ssh/\"; \
+    echo -e \"${password_to_use}\" | sudo -S chown ${username}:$username \"/home/${username}/.ssh/\"; \
+    echo -e \"${password_to_use}\" | sudo -S chmod 700 \"/home/${username}/.ssh/\"; \
+    echo -e \"${password_to_use}\" | sudo -S -u ${username} sh -c 'cat /tmp/id_rsa.pub >> \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e \"${password_to_use}\" | sudo -S -u ${username} sh -c 'chown ${username}:$username \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e \"${password_to_use}\" | sudo -S -u ${username} sh -c 'chmod 600 \"/home/${username}/.ssh/authorized_keys\"'; \
+    echo -e \"${password_to_use}\" | sudo -S rm /tmp/id_rsa.pub; \
+    echo -e \"${password_to_use}\" | sudo -S service ssh restart; \
   "
-  most_recent_command_value=$?
-  check_for_error $most_recent_command_value "target setup" "ssh block #1"
+  if [ $always_use_key -gt 0 ]; then
+    write_block 2 "running first command with cert"
+    ssh -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" "${username}"@${hostname} -p ${ssh_port} "${execString}"
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "target setup" "ssh block #1"
+  else
+    write_block 2 "running first command with username and password"
+    sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${hostname} -p ${ssh_port} "${execString}"
+    most_recent_command_value=$?
+    check_for_error $most_recent_command_value "target setup" "ssh block #1"
+  fi
 }
 
 setup_cert_for_use() {
