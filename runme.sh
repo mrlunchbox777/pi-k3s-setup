@@ -568,23 +568,23 @@ create_and_send_the_cert() {
     check_for_error $most_recent_command_value "prep the cert" "keygen - pub"
   fi
 
-  write_block 2 "moving the keys out for password auth"
-  mkdir -p "/tmp${id_rsa_pub_location}"
-  mv "${pubkeyname}" "/tmp${pubkeyname}"
-  mv "${keyname}" "/tmp${keyname}"
-  mv "${requestname}" "/tmp${requestname}"
-  mv "${publiccertname}" "/tmp${publiccertname}"
-  mv "${pfxname}" "/tmp${pfxname}"
-
   write_block 2 "copy the public key to the target"
   # TODO: extra output here
   if [ $always_use_key -gt 0 ]; then
     write_block 2 "sending the cert with cert"
-    local scp_output=$(scp -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${username}"@${hostname}:/tmp/id_rsa.pub)
+    local scp_output=$(scp -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "${pubkeyname}" "${username}"@${hostname}:/tmp/id_rsa.pub)
     most_recent_command_value=$?
     write_block 2 "scp_output - $scp_output"
     check_for_error $most_recent_command_value "target setup" "scp"
   else
+    write_block 2 "moving the keys out for password auth"
+    mkdir -p "/tmp${id_rsa_pub_location}"
+    mv "${pubkeyname}" "/tmp${pubkeyname}"
+    mv "${keyname}" "/tmp${keyname}"
+    mv "${requestname}" "/tmp${requestname}"
+    mv "${publiccertname}" "/tmp${publiccertname}"
+    mv "${pfxname}" "/tmp${pfxname}"
+
     write_block 2 "sending the cert with username and password"
     local scp_output=$(sshpass -p "${initial_target_password}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${hostname}:/tmp/id_rsa.pub)
     most_recent_command_value=$?
@@ -636,12 +636,14 @@ first_command_run() {
 }
 
 setup_cert_for_use() {
-  write_block 2 "moving the keys out for password auth"
-  mv "/tmp${pubkeyname}" "${pubkeyname}"
-  mv "/tmp${keyname}" "${keyname}"
-  mv "/tmp${requestname}" "${requestname}"
-  mv "/tmp${publiccertname}" "${publiccertname}"
-  mv "/tmp${pfxname}" "${pfxname}"
+  if [ $always_use_key -lt 1 ]; then
+    write_block 2 "moving the keys back cert auth"
+    mv "/tmp${pubkeyname}" "${pubkeyname}"
+    mv "/tmp${keyname}" "${keyname}"
+    mv "/tmp${requestname}" "${requestname}"
+    mv "/tmp${publiccertname}" "${publiccertname}"
+    mv "/tmp${pfxname}" "${pfxname}"
+  fi
 
   write_block 2 "set up use of the cert"
   # TODO: extra output here

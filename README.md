@@ -8,6 +8,8 @@
 
 * allow use of only ssh keys
 * allow adding a non-server node
+* put in optional final reboot
+* put in optional wait for final reboot
 * update variable names
 * split into multiple scripts
 * rename runme
