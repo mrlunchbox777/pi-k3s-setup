@@ -793,6 +793,17 @@ install_k3sup_host() {
   fi
 }
 
+check_for_running_k3s() {
+  ssh -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" "${username}"@${hostname} -p ${ssh_port} " \
+    systemctl is-active --quiet k3s || exit 1
+  "
+  most_recent_command_value=$?
+  write_block 1 "Just checked for running k3s, if it errors here, k3s failed to start up. " \
+    "On the target - See \"systemctl status k3s.service\" and \"journalctl -xe\" for details." \
+    "Check the logs up above as well."
+  check_for_error $most_recent_command_value "target setup" "check for running k3s"
+}
+
 run_k3sup() {
   # TODO: extra output here
   write_block 2 "k3sup install node"
@@ -827,6 +838,7 @@ run_k3sup() {
       return 1
     fi
   fi
+  check_for_running_k3s
 }
 
 cleanup_run() {
