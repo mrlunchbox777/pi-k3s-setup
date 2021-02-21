@@ -28,6 +28,8 @@ initial_target_username="${initial_target_username:-"pi"}"
 initial_target_password="${initial_target_password:-"raspberry"}"
 cluster_username="${cluster_username:-"${username}"}"
 always_use_key="${always_use_key:-0}"
+install_as_cluster="${install_as_cluster:-1}"
+join_as_server="${join_as_server:-1}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -313,6 +315,18 @@ show_variables() {
   variablesArray+=( "  desc: flag, only use ssh keys" )
   variablesArray+=( "  note: use initial username and password=0 only use ssh keys=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
+  variablesArray+=( "install_as_cluster=$install_as_cluster" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -iac/--install_as_cluster" )
+  variablesArray+=( "  desc: flag, install as cluster" )
+  variablesArray+=( "  note: don't install as cluster=0 install as cluster=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
+  variablesArray+=( "join_as_server=$join_as_server" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -jas/--join_as_server" )
+  variablesArray+=( "  desc: flag, join as server" )
+  variablesArray+=( "  note: don't join as server=0 join as server=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -441,6 +455,14 @@ validate_variables() {
 
   if [[ ! "$always_use_key" =~ ^[0-1]$ ]]; then
     die "ERROR: \$always_use_key \"$always_use_key\" is not valid, please run with -h"
+  fi
+
+  if [[ ! "$install_as_cluster" =~ ^[0-1]$ ]]; then
+    die "ERROR: \$install_as_cluster \"$install_as_cluster\" is not valid, please run with -h"
+  fi
+
+  if [[ ! "$join_as_server" =~ ^[0-1]$ ]]; then
+    die "ERROR: \$join_as_server \"$join_as_server\" is not valid, please run with -h"
   fi
 }
 
@@ -743,7 +765,14 @@ run_k3sup() {
   # TODO: extra output here
   write_block 2 "k3sup install node"
   if [ ! -z "${cluster_server_name}" ]; then
-    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${cluster_username} --ssh-key "${keyname}" --server --server-ssh-port ${cluster_ssh_port} --ssh-port ${ssh_port}
+    server_string=""
+    if [ ${join_as_server} -gt 0 ]; then
+      server_string="--server"
+      write_block 2 "k3sup join as server"
+    else
+      write_block 2 "k3sup don't join as server"
+    fi
+    k3sup join --host ${hostname} --user ${username} --server-host ${cluster_server_name} --server-user ${cluster_username} --ssh-key "${keyname}" ${server_string} --server-ssh-port ${cluster_ssh_port} --ssh-port ${ssh_port}
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup join"
@@ -751,7 +780,14 @@ run_k3sup() {
       return 1
     fi
   else
-    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" --cluster --local-path "./kubeconfig/kubeconfig" --ssh-port ${ssh_port} --context "${context_name}"
+    cluster_string=""
+    if [ ${install_as_cluster} -gt 0 ]; then
+      cluster_string="--cluster"
+      write_block 2 "k3sup install as cluster"
+    else
+      write_block 2 "k3sup don't install as cluster"
+    fi
+    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" ${cluster_string} --local-path "./kubeconfig/kubeconfig" --ssh-port ${ssh_port} --context "${context_name}"
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup install"
@@ -1139,6 +1175,12 @@ while :; do
       ;;
     -sdsp|--always_use_key)       # Takes an option argument; ensure it has been specified.
         always_use_key=1
+      ;;
+    -iac|--install_as_cluster)       # Takes an option argument; ensure it has been specified.
+        install_as_cluster=1
+      ;;
+    -jas|--join_as_server)       # Takes an option argument; ensure it has been specified.
+        join_as_server=1
       ;;
     --)              # End of all options.
       shift
