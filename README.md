@@ -10,6 +10,7 @@ They keys and kubeconfig end up in the .docker-data folder. You will need to upd
 
 * update variable names
 * split into multiple scripts
+* rewrite how the kubeconfig gets updated, update the docs and show help as well
 * rename runme
 * rename repo
 
