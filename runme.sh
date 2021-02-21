@@ -130,6 +130,16 @@ show_help() {
   instructionArray+=( "    ii. Host" )
   instructionArray+=( "      1. Set the variables (see 2)" )
   instructionArray+=( "      2. Run the script" )
+  instructionArray+=( "4. Get Data" )
+  instructionArray+=( "  a. Docker" )
+  instructionArray+=( "    i. You will have to run get_docker_data.sh after running the docker-compose" )
+  instructionArray+=( "    ii. You will find all data in the .docker-data folder after running" )
+  instructionArray+=( "      1. The subfolder .ssh in .docker-data will have all of the ssh data" )
+  instructionArray+=( "      2. The subfolder kubeconfig in .docker-data will have kubeconfig data" )
+  instructionArray+=( "  b. Host" )
+  instructionArray+=( "    i. You will find all data in the following folders after running" )
+  instructionArray+=( "      1. The folder at \$id_rsa_pub_location (${id_rsa_pub_location}) will have all of the ssh data" )
+  instructionArray+=( "      2. The folder /kubeconfig will have kubeconfig data" )
   instructionArray+=( "" )
 
   write_block 1 "${instructionArray[@]}"
