@@ -8,8 +8,6 @@ They keys and kubeconfig end up in the .docker-data folder. You will need to upd
 
 ## Improvements
 
-* put in optional final reboot
-* put in optional wait for final reboot
 * make sure k3s is running at the very end (non-cluster, then join as server, skips start but doesn't fail)
 * update variable names
 * split into multiple scripts

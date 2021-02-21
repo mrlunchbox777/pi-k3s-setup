@@ -30,6 +30,8 @@ cluster_username="${cluster_username:-"${username}"}"
 always_use_key="${always_use_key:-0}"
 install_as_cluster="${install_as_cluster:-1}"
 join_as_server="${join_as_server:-1}"
+final_reboot="${final_reboot:-0}"
+wait_for_final_reboot="${wait_for_final_reboot:-0}"
 delimiter="*******************************************************"
 force_help=0
 updated_sudoers=0
@@ -337,6 +339,18 @@ show_variables() {
   variablesArray+=( "  desc: flag, join as server" )
   variablesArray+=( "  note: don't join as server=0 join as server=1, if used as a parameter set to 1" )
   variablesArray+=( "" )
+  variablesArray+=( "final_reboot=$final_reboot" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -fr/--final_reboot" )
+  variablesArray+=( "  desc: flag, reboot target after run" )
+  variablesArray+=( "  note: don't reboot=0 reboot=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
+  variablesArray+=( "wait_for_final_reboot=$wait_for_final_reboot" )
+  variablesArray+=( "  optional" )
+  variablesArray+=( "  -wfr/--wait_for_final_reboot" )
+  variablesArray+=( "  desc: flag, wait for the target to come back up after final reboot" )
+  variablesArray+=( "  note: don't wait for reboot=0 wait for reboot=1, if used as a parameter set to 1" )
+  variablesArray+=( "" )
 
   write_block 1 "${variablesArray[@]}"
   write_block 2 "" "contents of /etc/resolv.conf" "" "$(cat /etc/resolv.conf)"
@@ -473,6 +487,14 @@ validate_variables() {
 
   if [[ ! "$join_as_server" =~ ^[0-1]$ ]]; then
     die "ERROR: \$join_as_server \"$join_as_server\" is not valid, please run with -h"
+  fi
+
+  if [[ ! "$final_reboot" =~ ^[0-1]$ ]]; then
+    die "ERROR: \$final_reboot \"$final_reboot\" is not valid, please run with -h"
+  fi
+
+  if [[ ! "$wait_for_final_reboot" =~ ^[0-1]$ ]]; then
+    die "ERROR: \$wait_for_final_reboot \"$wait_for_final_reboot\" is not valid, please run with -h"
   fi
 }
 
@@ -860,6 +882,12 @@ setup_target() {
   cat_remote_docs "after k3sup"
   cleanup_run
   cat_remote_docs "after cleanup"
+  if [ $final_reboot -gt 0 ]; then
+    reboot
+  fi
+  if [ $wait_for_final_reboot -gt 0 ]; then
+    wait_for_host
+  fi
 }
 
 post_run() {
@@ -1191,6 +1219,12 @@ while :; do
       ;;
     -jas|--join_as_server)       # Takes an option argument; ensure it has been specified.
         join_as_server=1
+      ;;
+    -fr|--final_reboot)       # Takes an option argument; ensure it has been specified.
+        final_reboot=1
+      ;;
+    -wfr|--wait_for_final_reboot)       # Takes an option argument; ensure it has been specified.
+        wait_for_final_reboot=1
       ;;
     --)              # End of all options.
       shift
