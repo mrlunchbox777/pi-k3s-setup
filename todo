@@ -1,0 +1,8 @@
+todo
+
+break up the runme.sh into multiple scripts that are easier to see what's going on
+consider including some tutorials for more specific stuff
+  https://www.youtube.com/watch?v=X9fSMGkjtug
+  https://medium.com/jit-team/building-a-gpu-enabled-kubernets-cluster-for-machine-learning-with-nvidia-jetson-nano-7b67de74172a
+show a way to run it with wget and with docker
+move readme todos to here
