@@ -1,4 +1,4 @@
-# When updating this ensure to update new-variables.sh
+# When updating this ensure to update valiadate-variables.sh
 show_variables() {
   local masked_password=$(echo -e $password | sed "s/^.*/\***/#")
   local masked_ssh_password=$(echo -e $admin_ssh_password | sed "s/^.*/\***/#")

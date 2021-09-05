@@ -1,4 +1,3 @@
-
 write_block() {
   if [ $1 -le $verbose ]; then
     set -- "${@:2}"
@@ -101,4 +100,34 @@ show_help() {
   instructionArray+=( "" )
 
   write_block 1 "${instructionArray[@]}"
+}
+
+confirm_run() {
+  if [ $interactive -gt 0 ]; then
+    read -r -p "Are you sure? [y/N] " response
+    case "$response" in
+      [yY][eE][sS]|[yY]) 
+        write_block 2 "Confirmation accepted, continuing..."
+        ;;
+      *)
+        die "Run cancelled, exiting..."
+        ;;
+    esac
+  else
+    write_block 2 "Non-interactive skipping confirmation..."
+  fi
+}
+
+post_run() {
+  write_block 1 "Successful Run"
+  show_variables
+  postRunArray=( "" )
+  postRunArray+=( "Successful Run" )
+  postRunArray+=( "For the security conscious consider changing the following:" )
+  postRunArray+=( "  - password on the target" )
+  postRunArray+=( "  - the password for the sshkey" )
+  postRunArray+=( "If running from docker you will find your ssh keys and kubeconfig in the .docker-data folder" )
+
+  postRunArray+=( "" )
+  write_block 1 "${postRunArray[@]}"
 }
