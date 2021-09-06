@@ -145,7 +145,7 @@ show_variables() {
   variablesArray+=( "context_name=$context_name" )
   variablesArray+=( "  optional" )
   variablesArray+=( "  -cn/--context_name" )
-  variablesArray+=( "  desc: the name of the context to use for the kubeconfig, default value is default" )
+  variablesArray+=( "  desc: the name of the context to use for the .kube/config, default value is default" )
   variablesArray+=( "" )
   variablesArray+=( "ssh_port=$ssh_port" )
   variablesArray+=( "  optional" )

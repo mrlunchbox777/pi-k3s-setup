@@ -45,7 +45,7 @@ run_k3sup() {
     else
       write_block 2 "k3sup don't install as cluster"
     fi
-    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" ${cluster_string} --local-path "./kubeconfig/kubeconfig" --ssh-port ${ssh_port} --context "${context_name}"
+    k3sup install --host ${hostname} --user ${username} --ssh-key "${keyname}" ${cluster_string} --local-path "./.kube/config" --ssh-port ${ssh_port} --context "${context_name}"
     most_recent_command_value=$?
     if [ $1 -eq 1 ]; then
       check_for_error $most_recent_command_value "target setup" "k3sup install"

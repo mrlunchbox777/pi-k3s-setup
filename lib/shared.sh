@@ -92,11 +92,11 @@ show_help() {
   instructionArray+=( "    i. You will have to run get_docker_data.sh after running the docker-compose" )
   instructionArray+=( "    ii. You will find all data in the .docker-data folder after running" )
   instructionArray+=( "      1. The subfolder .ssh in .docker-data will have all of the ssh data" )
-  instructionArray+=( "      2. The subfolder kubeconfig in .docker-data will have kubeconfig data" )
+  instructionArray+=( "      2. The subfolder .kube in .docker-data will have config data" )
   instructionArray+=( "  b. Host" )
   instructionArray+=( "    i. You will find all data in the following folders after running" )
   instructionArray+=( "      1. The folder at \$id_rsa_pub_location (${id_rsa_pub_location}) will have all of the ssh data" )
-  instructionArray+=( "      2. The folder /kubeconfig will have kubeconfig data" )
+  instructionArray+=( "      2. The folder /.kube will have config data" )
   instructionArray+=( "" )
 
   write_block 1 "${instructionArray[@]}"
@@ -126,7 +126,7 @@ post_run() {
   postRunArray+=( "For the security conscious consider changing the following:" )
   postRunArray+=( "  - password on the target" )
   postRunArray+=( "  - the password for the sshkey" )
-  postRunArray+=( "If running from docker you will find your ssh keys and kubeconfig in the .docker-data folder" )
+  postRunArray+=( "If running from docker you will find your ssh keys and .kube/config in the .docker-data folder" )
 
   postRunArray+=( "" )
   write_block 1 "${postRunArray[@]}"

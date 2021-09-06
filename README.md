@@ -1,6 +1,6 @@
 # pi-k3s-setup
 
-They keys and kubeconfig end up in the .docker-data folder. You will need to update the kubeconfig to use the right hostname.
+They keys and .kube/config end up in the .docker-data folder. You will need to update the .kube/config to use the right hostname.
 
 ## Issues
 
@@ -10,7 +10,7 @@ They keys and kubeconfig end up in the .docker-data folder. You will need to upd
 
 * update variable names
 * split into multiple scripts
-* rewrite how the kubeconfig gets updated, update the docs and show help as well
+* rewrite how the .kube/config gets updated, update the docs and show help as well
 * rename runme
 * rename repo
 
