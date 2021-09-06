@@ -51,6 +51,12 @@ first_command_run() {
       write_block 1 "rebooting target now"
     }
     wait_for_host
+    ssh-keygen -f "/tmp/known_hosts" -R "$initial_target_hostname"
+    ## TODO switch this back to cert management once the new and old ways are figured out
+    local host_fingerprint_output=$(sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${hostname} "echo got fingerprint")
+    most_recent_command_value=$?
+    write_block 2 "$host_fingerprint_output"
+    check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
   fi
 }
 
