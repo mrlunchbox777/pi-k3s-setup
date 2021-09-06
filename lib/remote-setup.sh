@@ -93,6 +93,9 @@ first_command_run() {
 
 second_command_run() {
   # TODO: extra output here
+  cgroup_regex="cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory"
+  gpu_regex="gpu_mem=16"
+  sudo_regex="${username} ALL=(ALL) NOPASSWD:ALL"
   ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${id_rsa_pub_location}id_rsa" -p ${ssh_port} " \
     if [ ${skip_del_pi_user} -eq 0 ]; then \
       getent passwd \"${initial_target_username}\" > /dev/null 2&>1; \
@@ -101,30 +104,26 @@ second_command_run() {
         echo -e \"${password}\" | sudo -S userdel -f -r \"${initial_target_username}\"; \
       fi; \
     fi; \
-    usingbootfirmware=\"false\"; \
+    if [ ! -f \"/boot/firmware/usercfg.txt\" ]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"\\\" > /boot/firmware/usercfg.txt\"; \
+    fi; \
     filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/firmware/usercfg.txt'); \
-    regex=\"gpu_mem=16\"; \
-    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/\ngpu_mem=16/' /boot/firmware/usercfg.txt >/boot/firmware/usercfg.txt.new && mv /boot/firmware/usercfg.txt.new /boot/firmware/usercfg.txt\"; \
-      usingbootfirmware=\"true\"; \
+    if [[ ! \" \$filecontent \" =~ \"$gpu_regex\" ]]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/\n$gpu_regex/' /boot/firmware/usercfg.txt >/boot/firmware/usercfg.txt.new && mv /boot/firmware/usercfg.txt.new /boot/firmware/usercfg.txt\"; \
     fi; \
-    cgroupconfigfiletotarget=\"cmdline.txt\"; \
-    if [ ! -f \"/boot/\$cgroupconfigfiletotarget\" ]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"echo '' > /boot/firmware/nobtcfg.txt\"; \
+    if [ ! -f \"/boot/cmdline.txt\" ]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"$cgroup_regex\\\" > /boot/cmdline.txt\"; \
     fi; \
-    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/\$cgroupconfigfiletotarget\"); \
-    regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
-    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory /' /boot/\$cgroupconfigfiletotarget >/boot/\${cgroupconfigfiletotarget}.new && mv /boot/\${cgroupconfigfiletotarget}.new /boot/\$cgroupconfigfiletotarget\"; \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/cmdline.txt\"); \
+    if [[ ! \" \$filecontent \" =~ \"$cgroup_regex\" ]]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ $cgroup_regex /' /boot/cmdline.txt >/boot/cmdline.txt.new && mv /boot/cmdline.txt.new /boot/cmdline.txt\"; \
     fi; \
-    cgroupconfigfiletotarget=\"firmware/nobtcfg.txt\"; \
-    if [ ! -f \"/boot/\$cgroupconfigfiletotarget\" ]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"echo '' > /boot/firmware/nobtcfg.txt\"; \
+    if [ ! -f \"/boot/firmware/nobtcfg.txt\" ]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"echo \\\"$cgroup_regex\\\" > /boot/firmware/nobtcfg.txt\"; \
     fi; \
-    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/\$cgroupconfigfiletotarget\"); \
-    regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
-    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory /' /boot/\$cgroupconfigfiletotarget >/boot/\${cgroupconfigfiletotarget}.new && mv /boot/\${cgroupconfigfiletotarget}.new /boot/\$cgroupconfigfiletotarget\"; \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/firmware/nobtcfg.txt\"); \
+    if [[ ! \" \$filecontent \" =~ \"$cgroup_regex\" ]]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ $cgroup_regex /' /boot/firmware/nobtcfg.txt >/boot/firmware/nobtcfg.txt.new && mv /boot/firmware/nobtcfg.txt.new /boot/firmware/nobtcfg.txt\"; \
     fi; \
     if [ ${skip_update} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get update; \
@@ -135,13 +134,11 @@ second_command_run() {
     if [ ${skip_autoremove} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get autoremove -y; \
     fi; \
-    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /etc/sudoers'); \
-    regex=\"${username} ALL=(ALL) NOPASSWD:ALL\"; \
-    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
+    if [[ ! \" \$filecontent \" =~ \"$sudo_regex\" ]]; then \
       echo -e \"${password}\" | sudo -S cp /etc/sudoers /etc/sudoers.bak; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '' >> /etc/sudoers\"; \
       echo -e \"${password}\" | sudo -S sh -c \"echo '# k3s setup no password required' >> /etc/sudoers\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"echo '${username} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"echo '$sudo_regex' >> /etc/sudoers\"; \
     fi;
   "
   most_recent_command_value=$?
