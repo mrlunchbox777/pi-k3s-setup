@@ -63,7 +63,6 @@ setup_target() {
   create_and_send_the_cert
   first_command_run
   setup_cert_for_use
-  [[ ! "${initial_target_hostname}" == "${hostname}" ]] && wait_for_host
   cat_remote_docs "before second command"
   second_command_run
   cat_remote_docs "after second command"

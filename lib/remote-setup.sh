@@ -50,6 +50,7 @@ first_command_run() {
     } || {
       write_block 1 "rebooting target now"
     }
+    wait_for_host
   fi
 }
 
