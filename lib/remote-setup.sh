@@ -42,6 +42,15 @@ first_command_run() {
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "target setup" "ssh block #1"
   fi
+  if [[ ! "${initial_target_hostname}" == "${hostname}" ]]; then
+    {
+      sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${initial_target_hostname} -p ${ssh_port} " \
+        echo -e \"${password}\" | sudo -S reboot now \
+      "
+    } || {
+      write_block 1 "rebooting target now"
+    }
+  fi
 }
 
 second_command_run() {
