@@ -41,6 +41,7 @@ first_command_run() {
       echo -e \"${password_to_use}\" | sudo -S sh -c \" \
         echo -e \"${password_to_use}\" | sudo -S useradd -m -G sudo ${username}; \
         echo \\\"${username}:${password}\\\" | chpasswd; \
+        echo -e \"${password_to_use}\" | sudo -S chsh -s /usr/bin/bash ${username}; \
       \"; \
     fi; \
     if [[ ! \"${initial_target_hostname}\" == \"${hostname}\" ]]; then \
@@ -100,10 +101,26 @@ second_command_run() {
         echo -e \"${password}\" | sudo -S userdel -f -r \"${initial_target_username}\"; \
       fi; \
     fi; \
-    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/cmdline.txt'); \
+    usingbootfirmware=\"false\"; \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c 'cat /boot/firmware/usercfg.txt'); \
+    regex=\"gpu_mem=16\"; \
+    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/\ngpu_mem=16/' /boot/firmware/usercfg.txt >/boot/firmware/usercfg.txt.new && mv /boot/firmware/usercfg.txt.new /boot/firmware/usercfg.txt\"; \
+      usingbootfirmware=\"true\"; \
+    fi; \
+    cgroupconfigfiletotarget=\"cmdline.txt\"; \
+    if [[ \"\$usingbootfirmware\" == \"false\" ]]; then \
+      cgroupconfigfiletotarget=\"cmdline.txt\"; \
+    else \
+      cgroupconfigfiletotarget=\"firmware/nobtcfg.txt\"; \
+      if [ -f \"/boot/\$cgroupconfigfiletotarget\" ]; then \
+        echo -e \"${password}\" | sudo -S sh -c \"echo '' > /boot/firmware/nobtcfg.txt\"; \
+      fi; \
+    fi; \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/\$cgroupconfigfiletotarget\"); \
     regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
     if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
-      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory /' /boot/cmdline.txt >/boot/cmdline.txt.new && mv /boot/cmdline.txt.new /boot/cmdline.txt\"; \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory /' /boot/\$cgroupconfigfiletotarget >/boot/\${cgroupconfigfiletotarget}.new && mv /boot/\${cgroupconfigfiletotarget}.new /boot/\$cgroupconfigfiletotarget\"; \
     fi; \
     if [ ${skip_update} -eq 0 ]; then \
       echo -e \"${password}\" | sudo -S apt-get update; \
@@ -172,7 +189,7 @@ cat_remote_docs() {
     if [ ! -z "$1" ]; then
       write_block 2 "$1"
     fi
-    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" -p ${ssh_port} " \
+    execString=" \
       echo \"contents of /etc/sudoers\"; \
       echo \"\"; \
       echo -e \"${password}\" | sudo -S sh -c \"cat /etc/sudoers\"; \
@@ -180,8 +197,31 @@ cat_remote_docs() {
       echo \"\"; \
       echo \"contents of /boot/cmdline.txt\"; \
       echo \"\"; \
-      echo -e \"${password}\" | sudo -S sh -c \"cat /boot/cmdline.txt\"; \
+      if [ -f \"/boot/cmdline.txt\" ]; then \
+        echo -e \"${password}\" | sudo -S sh -c \"cat /boot/cmdline.txt\"; \
+      else \
+        echo \"No file found\"
+      fi; \
+      echo \"\"; \
+      echo \"\"; \
+      echo \"contents of /boot/firmware/usercfg.txt\"; \
+      echo \"\"; \
+      if [ -f \"/boot/firmware/usercfg.txt\" ]; then \
+        echo -e \"${password}\" | sudo -S sh -c \"cat /boot/firmware/usercfg.txt\"; \
+      else \
+        echo \"No file found\"
+      fi; \
+      echo \"\"; \
+      echo \"\"; \
+      echo \"contents of /boot/firmware/nobtcfg.txt\"; \
+      echo \"\"; \
+      if [ -f \"/boot/firmware/nobtcfg.txt\" ]; then \
+        echo -e \"${password}\" | sudo -S sh -c \"cat /boot/firmware/nobtcfg.txt\"; \
+      else \
+        echo \"No file found\"
+      fi; \
     "
+    ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" -p ${ssh_port} "$execString"
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "cat remote docs" "cat remote docs"
   fi
