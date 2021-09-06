@@ -6,12 +6,12 @@ update_known_hosts() {
   write_block 2 "add fingerprint to known_hosts"
   # TODO: extra output here
   if [ $always_use_key -gt 0 ]; then
-    local host_fingerprint_output=$(ssh -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${username}"@${hostname} "echo got fingerprint")
+    local host_fingerprint_output=$(ssh -i "${id_rsa_pub_location}id_rsa" -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${username}"@${initial_target_hostname} "echo got fingerprint")
     most_recent_command_value=$?
     write_block 2 "$host_fingerprint_output"
     check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
   else
-    local host_fingerprint_output=$(sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${hostname} "echo got fingerprint")
+    local host_fingerprint_output=$(sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" -o "StrictHostKeyChecking=accept-new" -p ${ssh_port} "${initial_target_username}"@${initial_target_hostname} "echo got fingerprint")
     most_recent_command_value=$?
     write_block 2 "$host_fingerprint_output"
     check_for_error $most_recent_command_value "target setup" "add fingerprint to known_hosts"
@@ -123,7 +123,7 @@ create_and_send_the_cert() {
     mv "${pfxname}" "/tmp${pfxname}"
 
     write_block 2 "sending the cert with username and password"
-    local scp_output=$(sshpass -p "${initial_target_password}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${hostname}:/tmp/id_rsa.pub)
+    local scp_output=$(sshpass -p "${initial_target_password}" scp -o "UserKnownHostsFile /tmp/known_hosts" -P ${ssh_port} "/tmp${pubkeyname}" "${initial_target_username}"@${initial_target_hostname}:/tmp/id_rsa.pub)
     most_recent_command_value=$?
     write_block 2 "scp_output - $scp_output"
     check_for_error $most_recent_command_value "target setup" "scp"

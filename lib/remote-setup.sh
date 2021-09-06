@@ -14,6 +14,10 @@ first_command_run() {
       \"; \
     fi; \
     if [ ${skip_deny_ssh_passwords} -eq 0 ]; then \
+      echo \"${hostname}\" > /tmp/basic-setup-new-hostname; \
+      echo -e \"${password_to_use}\" | sudo -S mv -f /tmp/basic-setup-new-hostname /etc/hostname; \
+    fi; \
+    if [ ! \"${initial_target_hostname}\" -eq \"${hostname}\" ]; then \
       echo -e \"${password_to_use}\" | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     fi; \
     echo -e \"${password_to_use}\" | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \
@@ -34,7 +38,7 @@ first_command_run() {
     check_for_error $most_recent_command_value "target setup" "ssh block #1"
   else
     write_block 2 "running first command with username and password"
-    sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${hostname} -p ${ssh_port} "${execString}"
+    sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${initial_target_hostname} -p ${ssh_port} "${execString}"
     most_recent_command_value=$?
     check_for_error $most_recent_command_value "target setup" "ssh block #1"
   fi

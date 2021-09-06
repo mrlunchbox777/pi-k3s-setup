@@ -108,6 +108,11 @@ validate_variables() {
     die "ERROR: \$cluster_ssh_port \"$cluster_ssh_port\" is not a valid port, please run with -h"
   fi
 
+  host "$initial_target_hostname" 2>&1 > /dev/null
+  if [ ! $? -eq 0 ]; then
+    die "ERROR: \$initial_target_hostname \"$initial_target_hostname\" is not a valid hostname, please run with -h"
+  fi
+
   if ! is_valid_username "$initial_target_username"; then
     die "ERROR: \$initial_target_username \"$initial_target_username\" is not a valid username, please run with -h"
   fi

@@ -24,6 +24,7 @@ skip_deny_ssh_passwords="${SKIP_DENY_SSH_PASSWORDS:-0}"
 context_name="${CONTEXT_NAME:-"default"}"
 ssh_port="${SSH_PORT:-22}"
 cluster_ssh_port="${CLUSTER_SSH_PORT:-22}"
+initial_target_hostname="${INITIAL_TARGET_HOSTNAME:-"$hostname"}"
 initial_target_username="${INITIAL_TARGET_USERNAME:-"pi"}"
 initial_target_password="${INITIAL_TARGET_PASSWORD:-"raspberry"}"
 cluster_username="${CLUSTER_USERNAME:-"${USERNAME}"}"
@@ -342,6 +343,20 @@ while :; do
       ;;
     --cluster_ssh_port=)         # Handle the case of an empty --file=
       die 'ERROR: "--cluster_ssh_port" requires a non-empty option argument.'
+      ;;
+    -ith|--initial_target_hostname)       # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        initial_target_hostname=$2
+        shift
+      else
+        die 'ERROR: "--initial_target_hostname" requires a non-empty option argument.'
+      fi
+      ;;
+    --initial_target_hostname=?*)
+      initial_target_hostname=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --initial_target_hostname=)         # Handle the case of an empty --file=
+      die 'ERROR: "--initial_target_hostname" requires a non-empty option argument.'
       ;;
     -itu|--initial_target_username)       # Takes an option argument; ensure it has been specified.
       if [ "$2" ]; then
