@@ -1,3 +1,33 @@
+setup_target() {
+  wait_for_host
+  update_known_hosts
+  create_and_send_the_cert
+  first_command_run
+  setup_cert_for_use
+  cat_remote_docs "before second command"
+  second_command_run
+  cat_remote_docs "after second command"
+  reboot
+  install_k3sup_host
+  wait_for_host
+  {
+    run_k3sup 0
+  } || {
+    write_block 0 "k3sup failed on first run. This happens sometimes because of timeouts, boot time, cgroups, etc. Sleeping and trying again"
+    sleep 30
+    run_k3sup 1
+  }
+  cat_remote_docs "after k3sup"
+  cleanup_run
+  cat_remote_docs "after cleanup"
+  if [ $final_reboot -gt 0 ]; then
+    reboot
+  fi
+  if [ $wait_for_final_reboot -gt 0 ]; then
+    wait_for_host
+  fi
+}
+
 first_command_run() {
   password_to_use=""
   if [ $always_use_key -gt 0 ]; then
@@ -45,7 +75,7 @@ first_command_run() {
   if [[ ! "${initial_target_hostname}" == "${hostname}" ]]; then
     {
       sshpass -p "${initial_target_password}" ssh -o "UserKnownHostsFile /tmp/known_hosts" "${initial_target_username}"@${initial_target_hostname} -p ${ssh_port} " \
-        echo -e \"${password}\" | sudo -S reboot now \
+        echo -e \"${initial_target_password}\" | sudo -S reboot now \
       "
     } || {
       write_block 1 "rebooting target now"
