@@ -13,11 +13,11 @@ first_command_run() {
         echo \\\"${username}:${password}\\\" | chpasswd; \
       \"; \
     fi; \
-    if [ ${skip_deny_ssh_passwords} -eq 0 ]; then \
-      echo \"${hostname}\" > /tmp/basic-setup-new-hostname; \
+    if [[ ! \"${initial_target_hostname}\" == \"${hostname}\" ]]; then \
+      echo \"${hostname}\" > /tmp/basic-setup-new-hostname ; \
       echo -e \"${password_to_use}\" | sudo -S mv -f /tmp/basic-setup-new-hostname /etc/hostname; \
     fi; \
-    if [ ! \"${initial_target_hostname}\" -eq \"${hostname}\" ]; then \
+    if [ ${skip_deny_ssh_passwords} -eq 0 ]; then \
       echo -e \"${password_to_use}\" | sudo -S sed -i 's/#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config; \
     fi; \
     echo -e \"${password_to_use}\" | sudo -S chown ${username}:$username /tmp/id_rsa.pub; \

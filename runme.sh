@@ -44,7 +44,15 @@ requestname="${id_rsa_pub_location}request.csr"
 publiccertname="${id_rsa_pub_location}cert.crt"
 pfxname="${id_rsa_pub_location}pkcs.pfx"
 
-pi_k3s_base_dir="${BASH_SOURCE[0]}"
+pi_k3s_base_source="${BASH_SOURCE[0]}"
+while [ -h "$source" ]; do # resolve $source until the file is no longer a symlink
+  pi_k3s_base_dir="$( cd -P "$( dirname "$pi_k3s_base_source" )" >/dev/null 2>&1 && pwd )"
+  pi_k3s_base_source="$(readlink "$pi_k3s_base_source")"
+  [[ $pi_k3s_base_source != /* ]] && \
+    pi_k3s_base_source="$pi_k3s_base_dir/$pi_k3s_base_source" # if $source was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+pi_k3s_base_dir="$( cd -P "$( dirname "$source" )" >/dev/null 2>&1 && pwd )"
+
 for pi_k3s_setup_lib_f in $(ls -p "$pi_k3s_base_dir/lib/" | grep -v /); do
   source "$pi_k3s_base_dir/lib/$pi_k3s_setup_lib_f";
 done
