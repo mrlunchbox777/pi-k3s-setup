@@ -109,13 +109,17 @@ second_command_run() {
       usingbootfirmware=\"true\"; \
     fi; \
     cgroupconfigfiletotarget=\"cmdline.txt\"; \
-    if [[ \"\$usingbootfirmware\" == \"false\" ]]; then \
-      cgroupconfigfiletotarget=\"cmdline.txt\"; \
-    else \
-      cgroupconfigfiletotarget=\"firmware/nobtcfg.txt\"; \
-      if [ -f \"/boot/\$cgroupconfigfiletotarget\" ]; then \
-        echo -e \"${password}\" | sudo -S sh -c \"echo '' > /boot/firmware/nobtcfg.txt\"; \
-      fi; \
+    if [ ! -f \"/boot/\$cgroupconfigfiletotarget\" ]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"echo '' > /boot/firmware/nobtcfg.txt\"; \
+    fi; \
+    filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/\$cgroupconfigfiletotarget\"); \
+    regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
+    if [[ ! \" \$filecontent \" =~ \"\$regex\" ]]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"sed '$ s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory /' /boot/\$cgroupconfigfiletotarget >/boot/\${cgroupconfigfiletotarget}.new && mv /boot/\${cgroupconfigfiletotarget}.new /boot/\$cgroupconfigfiletotarget\"; \
+    fi; \
+    cgroupconfigfiletotarget=\"firmware/nobtcfg.txt\"; \
+    if [ ! -f \"/boot/\$cgroupconfigfiletotarget\" ]; then \
+      echo -e \"${password}\" | sudo -S sh -c \"echo '' > /boot/firmware/nobtcfg.txt\"; \
     fi; \
     filecontent=\$(echo -e \"${password}\" | sudo -S sh -c \"cat /boot/\$cgroupconfigfiletotarget\"); \
     regex=\"cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\"; \
