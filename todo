@@ -10,3 +10,4 @@ show a way to run it with wget and with docker
   probably still use docker to run, but have a way to run it with nothing
 move readme todos to here
 code deduplication
+create a versioning system

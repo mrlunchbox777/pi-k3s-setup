@@ -11,5 +11,5 @@ services:
     privileged: true
     volumes:
       - ./.docker-data/.ssh:${id_rsa_pub_location:-/root/.ssh}
-      - ./.docker-data/.kube/config:/.kube/config
+      - ./.docker-data/.kube:/.kube
     network_mode: host
