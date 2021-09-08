@@ -9,11 +9,11 @@ They keys and .kube/config end up in the .docker-data folder. You will need to u
 ## Setup
 
 * On your machine
-  * download raspbian
+  * Download raspbian and flash it to SD card
     * [Download image](https://www.raspberrypi.org/software/operating-systems/) & flash using [balena etcher](https://www.balena.io/etcher/)
     * Flash using [Raspberry Pi Imager](https://www.raspberrypi.org/downloads.../)
 * On the pi
-  * Start up with keyboard & mouse
+  * Start up with network, monitor, keyboard, mouse, and SD card
     * Default credentials
       * u: `raspberry`
       * p: `pi`
