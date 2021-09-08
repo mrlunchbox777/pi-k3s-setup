@@ -1,0 +1,20 @@
+todo
+
+break up the runme.sh into multiple scripts that are easier to see what's going on
+change how we switch from initial to regular (hostname/username/password)
+change how we switch from ssh w/key vs w/password
+consider including some tutorials for more specific stuff
+  https://www.youtube.com/watch?v=X9fSMGkjtug
+  https://medium.com/jit-team/building-a-gpu-enabled-kubernets-cluster-for-machine-learning-with-nvidia-jetson-nano-7b67de74172a
+show a way to run it with wget and with docker
+  probably still use docker to run, but have a way to run it with nothing
+move readme todos to here
+code deduplication
+create a versioning system
+
+## Steps
+
+* the cluster-server name needs to be reachable on k8s (6443) and ssh (22)
+* use the rasperry-os image
+* right now ssh-keys and passwords have to be the same on nodes
+* run get_docker_data after
