@@ -11,3 +11,10 @@ show a way to run it with wget and with docker
 move readme todos to here
 code deduplication
 create a versioning system
+
+## Steps
+
+* the cluster-server name needs to be reachable on k8s (6443) and ssh (22)
+* use the rasperry-os image
+* right now ssh-keys and passwords have to be the same on nodes
+* run get_docker_data after
