@@ -29,6 +29,16 @@ They keys and .kube/config end up in the .docker-data folder. You will need to u
 * On your machine
   * From the root of this directory run `docker-compose build && docker-compose up`
 
+## Load Balancing On PF Sense
+
+* Create a virtual ip (you can just bind on LAN and use natting to move traffic around)
+* Create an alias pointing to the virtual ip
+* Create a Load Balancer Pool with all of the nodes in it
+* Create a Virtual Server that uses that pool and uses the virtual ip you created before
+* still not getting a connect...... 
+
+maybe try this instead - https://devopstales.github.io/home/k8s-metallb-bgp-pfsense
+
 ## Improvements
 
 * update variable names
