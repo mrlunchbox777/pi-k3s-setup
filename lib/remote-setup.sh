@@ -8,6 +8,7 @@ setup_target() {
   second_command_run
   cat_remote_docs "after second command"
   reboot
+  jetson-prep
   install_k3sup_host
   wait_for_host
   {
