@@ -11,6 +11,8 @@ show a way to run it with wget and with docker
 move readme todos to here
 code deduplication
 create a versioning system
+update variable names
+rewrite how the .kube/config gets updated, update the docs and show help as well
 
 ## Steps
 
