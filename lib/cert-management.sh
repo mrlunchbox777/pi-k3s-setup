@@ -67,9 +67,6 @@ create_myserver_cnf() {
 
 create_and_send_the_cert() {
   write_block 2 "prep the cert"
-  if [ -z "${id_rsa_pub_location}" ]; then
-    id_rsa_pub_location="/home/${admin_username}/.ssh/"
-  fi
   if [ ! -f "${id_rsa_pub_location}" ]; then
     mkdir -p "${id_rsa_pub_location}"
   fi

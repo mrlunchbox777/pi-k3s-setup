@@ -10,6 +10,6 @@ services:
     env_file: .env
     privileged: true
     volumes:
-      - ./.docker-data/.ssh:${id_rsa_pub_location:-/root/.ssh}
+      - ./.docker-data/.ssh:${ID_RSA_PUB_LOCATION:-/root/.ssh}
       - ./.docker-data/.kube:/.kube
     network_mode: host

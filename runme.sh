@@ -45,6 +45,10 @@ requestname="${id_rsa_pub_location}request.csr"
 publiccertname="${id_rsa_pub_location}cert.crt"
 pfxname="${id_rsa_pub_location}pkcs.pfx"
 
+if [[ "$username" == "$initial_target_username" ]]; then
+  skip_del_pi_user=1
+fi
+
 pi_k3s_base_source="${BASH_SOURCE[0]}"
 while [ -h "$source" ]; do # resolve $source until the file is no longer a symlink
   pi_k3s_base_dir="$( cd -P "$( dirname "$pi_k3s_base_source" )" >/dev/null 2>&1 && pwd )"
