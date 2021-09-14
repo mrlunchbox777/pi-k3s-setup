@@ -4,18 +4,18 @@ jetson-exec-command() {
 }
 
 jetsonDockerDaemonString="\
-{
-  “default-runtime”: “nvidia”,
-  “runtimes”: {
-    “nvidia”: {
-      “path”: “nvidia-container-runtime”,
-      “runtimeArgs”: []
-    }
-  }
-}
-"
+{ \
+  “default-runtime”: “nvidia”, \
+  “runtimes”: { \
+    “nvidia”: { \
+      “path”: “nvidia-container-runtime”, \
+      “runtimeArgs”: [] \
+    } \
+  } \
+}"
 
 jetson-update() {
+  write_block 1 "Running updates for jetson"
   jetson-exec-command " \
     echo -e \"${password}\" | sudo -S systemctl set-default multi-user.target;
     echo -e \"${password}\" | sudo -S nvpmodel -m 0; \
@@ -34,6 +34,8 @@ jetson-reboot() {
 }
 
 jetson-prep() {
-  jetson-update
-  jetson-reboot
+  if [ $is_node_jetson -gt 0 ]; then
+    jetson-update
+    jetson-reboot
+  fi
 }
