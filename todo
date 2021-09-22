@@ -13,6 +13,7 @@ code deduplication
 create a versioning system
 update variable names
 rewrite how the .kube/config gets updated, update the docs and show help as well
+clear bash/sh/zsh history after run
 
 ## Steps
 
