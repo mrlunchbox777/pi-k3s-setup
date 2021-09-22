@@ -80,8 +80,8 @@ validate_variables() {
     die "ERROR: \$myserver_organization_name \"$myserver_organization_name\" is not valid, please run with -h"
   fi
 
-  if [[ ! "$skip_del_pi_user" =~ ^[0-1]$ ]]; then
-    die "ERROR: \$skip_del_pi_user \"$skip_del_pi_user\" is not valid, please run with -h"
+  if [[ ! "$skip_del_initial_user" =~ ^[0-1]$ ]]; then
+    die "ERROR: \$skip_del_initial_user \"$skip_del_initial_user\" is not valid, please run with -h"
   fi
 
   if [[ ! "$skip_deny_ssh_passwords" =~ ^[0-1]$ ]]; then

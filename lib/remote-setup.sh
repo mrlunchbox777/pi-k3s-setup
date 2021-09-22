@@ -93,13 +93,12 @@ first_command_run() {
 }
 
 second_command_run() {
-  # TODO: extra output here
   cgroup_regex="cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory"
   gpu_regex="gpu_mem=16"
   sudo_regex="${username} ALL=(ALL) NOPASSWD:ALL"
   execString=" \
-    echo \"before del pi user\"; \
-    if [ ${skip_del_pi_user} -eq 0 ]; then \
+    echo \"before del initial user\"; \
+    if [ ${skip_del_initial_user} -eq 0 ]; then \
       getent passwd \"${initial_target_username}\" > /dev/null 2&>1; \
       if [ \$? -eq 0 ]; then \
         echo -e \"${password}\" | sudo -S killall -u \"${initial_target_username}\"; \

@@ -20,7 +20,7 @@ myserver_location="${MYSERVER_LOCATION:-"SLC"}"
 myserver_organizational_unit="${MYSERVER_ORGANIZATIONAL_UNIT:-"IT"}"
 myserver_fully_qualified_domain_name="${MYSERVER_FULLY_QUALIFIED_DOMAIN_NAME:-"k3s.local"}"
 myserver_organization_name="${MYSERVER_ORGANIZATION_NAME:-"k3s"}"
-skip_del_pi_user="${SKIP_DEL_PI_USER:-0}"
+skip_del_initial_user="${SKIP_DEL_INITIAL_USER:-0}"
 skip_deny_ssh_passwords="${SKIP_DENY_SSH_PASSWORDS:-0}"
 context_name="${CONTEXT_NAME:-"default"}"
 ssh_port="${SSH_PORT:-22}"
@@ -46,7 +46,7 @@ publiccertname="${id_rsa_pub_location}cert.crt"
 pfxname="${id_rsa_pub_location}pkcs.pfx"
 
 if [[ "$username" == "$initial_target_username" ]]; then
-  skip_del_pi_user=1
+  skip_del_initial_user=1
 fi
 
 pi_k3s_base_source="${BASH_SOURCE[0]}"
@@ -279,8 +279,8 @@ while :; do
     --myserver_organization_name=)         # Handle the case of an empty --file=
       die 'ERROR: "--myserver_organization_name" requires a non-empty option argument.'
       ;;
-    -sdpu|--skip_del_pi_user)       # Takes an option argument; ensure it has been specified.
-        skip_del_pi_user=1
+    -sdiu|--skip_del_initial_user)       # Takes an option argument; ensure it has been specified.
+        skip_del_initial_user=1
       ;;
     -sdsp|--skip_deny_ssh_passwords)       # Takes an option argument; ensure it has been specified.
         skip_deny_ssh_passwords=1
