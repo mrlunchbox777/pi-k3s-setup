@@ -164,7 +164,6 @@ second_command_run() {
 }
 
 reboot() {
-  # TODO: extra output here
   {
     ssh ${username}@${hostname} -o "UserKnownHostsFile /tmp/known_hosts" -i "${keyname}" -p ${ssh_port} " \
       echo -e \"${password}\" | sudo -S reboot now \
