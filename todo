@@ -15,6 +15,10 @@ update variable names
 rewrite how the .kube/config gets updated, update the docs and show help as well
 clear bash/sh/zsh history after run
 
+## WIP Links
+https://ostechnix.com/allow-deny-ssh-access-particular-user-group-linux/
+https://askubuntu.com/questions/191999/how-to-clear-bash-history-completely
+
 ## Steps
 
 * the cluster-server name needs to be reachable on k8s (6443) and ssh (22)
